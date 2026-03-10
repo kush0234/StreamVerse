@@ -1,0 +1,143 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .dashboard-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px 30px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .dashboard-banner-content h2 {
+        color: white;
+        margin: 0 0 8px 0;
+        font-size: 26px;
+        font-weight: 600;
+    }
+
+    .dashboard-banner-content p {
+        color: rgba(255, 255, 255, 0.95);
+        margin: 0;
+        font-size: 15px;
+    }
+
+    .dashboard-button {
+        background: rgba(255, 255, 255, 0.95);
+        color: #667eea !important;
+        padding: 16px 40px !important;
+        border-radius: 12px !important;
+        text-decoration: none !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        border: 2px solid transparent !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    .dashboard-button:hover {
+        transform: translateY(-3px) scale(1.02) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+        background: white !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        text-decoration: none !important;
+    }
+
+    .quick-access-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .quick-access-card {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .quick-access-card:hover {
+        border-color: #667eea;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .quick-access-card .label {
+        font-size: 11px;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .quick-access-card a {
+        color: inherit;
+        font-weight: bold;
+        text-decoration: none;
+        font-size: 17px;
+        display: block;
+    }
+
+    .quick-access-card a:hover {
+        text-decoration: none;
+    }
+
+    .quick-access-card.payments a {
+        color: #28a745;
+    }
+
+    .quick-access-card.subscriptions a {
+        color: #fd7e14;
+    }
+
+    .quick-access-card.users a {
+        color: #007bff;
+    }
+
+    .quick-access-card.content a {
+        color: #6f42c1;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-banner {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .dashboard-button {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Banner -->
+<div class="dashboard-banner">
+    <div class="dashboard-banner-content">
+        <h2>📊 Dashboard Overview</h2>
+        <p>View comprehensive statistics including revenue, users, subscriptions, and payments</p>
+    </div>
+    <a href="{% url 'admin_dashboard' %}" class="dashboard-button primary">
+        View Dashboard 👉
+    </a>
+</div>
+
+{{ block.super }}
+{% endblock %}
