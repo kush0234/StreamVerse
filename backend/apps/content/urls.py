@@ -61,3 +61,36 @@ urlpatterns = [
     # Router URLs (tags only)
     path("", include(router.urls)),
 ]
+# Import recommendation views
+from .recommendation_views import (
+    home_recommendations,
+    trending_videos as rec_trending_videos,
+    trending_music as rec_trending_music,
+    top_video_picks,
+    top_music_picks,
+    continue_watching as rec_continue_watching,
+    similar_content,
+    record_interaction,
+    update_similarity_scores,
+)
+
+# Add recommendation URLs to urlpatterns
+recommendation_urls = [
+    # Main recommendation endpoints
+    path("recommendations/home/", home_recommendations, name="home-recommendations"),
+    path("recommendations/videos/trending/", rec_trending_videos, name="rec-trending-videos"),
+    path("recommendations/music/trending/", rec_trending_music, name="rec-trending-music"),
+    path("recommendations/videos/top-picks/", top_video_picks, name="top-video-picks"),
+    path("recommendations/music/top-picks/", top_music_picks, name="top-music-picks"),
+    path("recommendations/continue-watching/", rec_continue_watching, name="rec-continue-watching"),
+    path("recommendations/similar/<int:content_id>/", similar_content, name="similar-content-rec"),
+    
+    # Interaction tracking
+    path("recommendations/record-interaction/", record_interaction, name="record-interaction"),
+    
+    # Admin endpoints
+    path("recommendations/update-similarity/", update_similarity_scores, name="update-similarity"),
+]
+
+# Extend the main urlpatterns
+urlpatterns.extend(recommendation_urls)

@@ -233,3 +233,99 @@ class WatchlistSerializer(serializers.ModelSerializer):
                 "thumbnail": thumbnail_url,
             }
         return None
+
+
+class ContinueWatchingSerializer(serializers.Serializer):
+    """Serializer for continue watching recommendations"""
+    content = serializers.SerializerMethodField()
+    content_type = serializers.CharField()
+    progress_percentage = serializers.FloatField()
+    duration_watched = serializers.IntegerField()
+    last_watched = serializers.DateTimeField()
+    
+    def get_content(self, obj):
+        content = obj['content']
+        if obj['content_type'] == 'episode':
+            return {
+                'id': content.id,
+                'title': content.title,
+                'season_number': content.season_number,
+                'episode_number': content.episode_number,
+                'duration': content.duration,
+                'series_title': content.series.title,
+                'series_id': content.series.id,
+                'thumbnail': content.thumbnail.url if content.thumbnail else None,
+            }
+        else:
+            return {
+                'id': content.id,
+                'title': content.title,
+                'content_type': content.content_type,
+                'duration': content.duration,
+                'thumbnail': content.thumbnail.url if content.thumbnail else None,
+            }
+
+
+class RecommendationVideoSerializer(serializers.ModelSerializer):
+    """Simplified video serializer for recommendations"""
+    thumbnail = serializers.SerializerMethodField()
+    episode_count = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = VideoContent
+        fields = [
+            'id', 'title', 'description', 'genre', 'release_date', 
+            'rating', 'content_type', 'thumbnail', 'duration', 
+            'view_count', 'episode_count', 'tags'
+        ]
+    
+    def get_thumbnail(self, obj):
+        if obj.thumbnail:
+            try:
+                return obj.thumbnail.url
+            except:
+                return None
+        return None
+    
+    def get_episode_count(self, obj):
+        if obj.content_type == "SERIES":
+            return obj.episodes.count()
+        return 0
+
+
+class RecommendationMusicSerializer(serializers.ModelSerializer):
+    """Simplified music serializer for recommendations"""
+    thumbnail = serializers.SerializerMethodField()
+    duration_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Music
+        fields = [
+            'id', 'title', 'artist', 'album', 'genre', 'release_date',
+            'thumbnail', 'duration', 'duration_formatted', 'play_count'
+        ]
+    
+    def get_thumbnail(self, obj):
+        if obj.thumbnail:
+            try:
+                return obj.thumbnail.url
+            except:
+                return None
+        return None
+    
+    def get_duration_formatted(self, obj):
+        minutes = obj.duration // 60
+        seconds = obj.duration % 60
+        return f"{minutes}:{seconds:02d}"
+
+
+class HomeRecommendationsSerializer(serializers.Serializer):
+    """Serializer for home page recommendations"""
+    continue_watching = ContinueWatchingSerializer(many=True)
+    trending_videos = RecommendationVideoSerializer(many=True)
+    top_video_picks = RecommendationVideoSerializer(many=True)
+    because_you_watched = RecommendationVideoSerializer(many=True)
+    trending_music = RecommendationMusicSerializer(many=True)
+    top_music_picks = RecommendationMusicSerializer(many=True)
+    because_you_listened = RecommendationMusicSerializer(many=True)

@@ -223,3 +223,119 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     readonly_fields = ["slug", "usage_count", "created_at"]
     ordering = ["-usage_count", "name"]
+from .models import UserInteraction, ContentSimilarity, MusicListenHistory
+
+
+@admin.register(UserInteraction)
+class UserInteractionAdmin(admin.ModelAdmin):
+    list_display = [
+        "user", "profile", "interaction_type", "get_content", 
+        "interaction_value", "duration", "created_at"
+    ]
+    list_filter = [
+        "interaction_type", "created_at", "user", "profile"
+    ]
+    search_fields = [
+        "user__username", "profile__name", "video__title", 
+        "music__title", "episode__title"
+    ]
+    readonly_fields = ["created_at"]
+    ordering = ["-created_at"]
+    
+    def get_content(self, obj):
+        if obj.video:
+            return f"Video: {obj.video.title}"
+        elif obj.music:
+            return f"Music: {obj.music.title}"
+        elif obj.episode:
+            return f"Episode: {obj.episode.title}"
+        return "No content"
+    get_content.short_description = "Content"
+    
+    fieldsets = (
+        ("User Information", {
+            "fields": ("user", "profile")
+        }),
+        ("Content", {
+            "fields": ("video", "music", "episode")
+        }),
+        ("Interaction Details", {
+            "fields": ("interaction_type", "interaction_value", "duration")
+        }),
+        ("Context", {
+            "fields": ("session_id", "device_type", "created_at"),
+            "classes": ("collapse",)
+        }),
+    )
+
+
+@admin.register(ContentSimilarity)
+class ContentSimilarityAdmin(admin.ModelAdmin):
+    list_display = [
+        "get_content_pair", "similarity_type", "similarity_score", 
+        "updated_at"
+    ]
+    list_filter = ["similarity_type", "updated_at"]
+    search_fields = [
+        "video_a__title", "video_b__title", 
+        "music_a__title", "music_b__title"
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+    ordering = ["-similarity_score"]
+    
+    def get_content_pair(self, obj):
+        if obj.video_a and obj.video_b:
+            return f"{obj.video_a.title} ↔ {obj.video_b.title}"
+        elif obj.music_a and obj.music_b:
+            return f"{obj.music_a.title} ↔ {obj.music_b.title}"
+        return "Invalid pair"
+    get_content_pair.short_description = "Content Pair"
+    
+    fieldsets = (
+        ("Video Similarity", {
+            "fields": ("video_a", "video_b"),
+            "description": "For video content similarity"
+        }),
+        ("Music Similarity", {
+            "fields": ("music_a", "music_b"),
+            "description": "For music content similarity"
+        }),
+        ("Similarity Details", {
+            "fields": ("similarity_type", "similarity_score")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",)
+        }),
+    )
+
+
+@admin.register(MusicListenHistory)
+class MusicListenHistoryAdmin(admin.ModelAdmin):
+    list_display = [
+        "user", "profile", "music", "duration_listened", 
+        "completed", "play_count", "updated_at"
+    ]
+    list_filter = ["completed", "updated_at", "user", "profile"]
+    search_fields = [
+        "user__username", "profile__name", "music__title", 
+        "music__artist"
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+    ordering = ["-updated_at"]
+    
+    fieldsets = (
+        ("User Information", {
+            "fields": ("user", "profile")
+        }),
+        ("Music", {
+            "fields": ("music",)
+        }),
+        ("Listen Details", {
+            "fields": ("duration_listened", "completed", "play_count")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",)
+        }),
+    )

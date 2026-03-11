@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import interactionTracker from '@/lib/interactionTracker';
 
 /**
  * VideoPlayer Component
@@ -11,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
  *   - video_url: String (local file URL or YouTube embed URL)
  *   - title: String
  *   - thumbnail: String (optional)
+ *   - id: Number (video ID for tracking)
  * - onTimeUpdate: Function (optional) - callback for tracking watch progress
  * - onEnded: Function (optional) - callback when video ends
  */
@@ -22,6 +24,7 @@ export default function VideoPlayer({ videoData, onTimeUpdate, onEnded }) {
   const [volume, setVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
   const [hoverTime, setHoverTime] = useState(null);
+  const [hasTrackedPlay, setHasTrackedPlay] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -42,21 +45,46 @@ export default function VideoPlayer({ videoData, onTimeUpdate, onEnded }) {
 
     const handleEnded = () => {
       setIsPlaying(false);
+      // Track completion
+      if (videoData?.id) {
+        interactionTracker.trackComplete(videoData.id, 'video', video.currentTime);
+      }
       if (onEnded) {
         onEnded();
+      }
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      // Track play interaction (only once per session)
+      if (videoData?.id && !hasTrackedPlay) {
+        interactionTracker.trackPlay(videoData.id, 'video');
+        setHasTrackedPlay(true);
+      }
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      // Track pause interaction
+      if (videoData?.id) {
+        interactionTracker.trackPause(videoData.id, 'video', video.currentTime);
       }
     };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('ended', handleEnded);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
     };
-  }, [onTimeUpdate, onEnded]);
+  }, [onTimeUpdate, onEnded, videoData?.id, hasTrackedPlay]);
 
   const togglePlay = () => {
     const video = videoRef.current;

@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import interactionTracker from '@/lib/interactionTracker';
 
 export default function ContentRow({ title, items, type = 'video' }) {
   const router = useRouter();
@@ -9,7 +10,11 @@ export default function ContentRow({ title, items, type = 'video' }) {
       if (window.openMusicPlayer) {
         window.openMusicPlayer(item.id);
       }
+      // Track music interaction
+      interactionTracker.trackView(item.id, 'music');
     } else {
+      // Track video interaction
+      interactionTracker.trackView(item.id, 'video');
       router.push(`/detail/${item.id}`);
     }
   };

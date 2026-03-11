@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
+import interactionTracker from '@/lib/interactionTracker';
 
 export default function MusicPlayer({ musicId, onClose }) {
   const audioRef = useRef(null);
@@ -12,6 +13,7 @@ export default function MusicPlayer({ musicId, onClose }) {
   const [volume, setVolume] = useState(100);
   const [showVolume, setShowVolume] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [hasTrackedPlay, setHasTrackedPlay] = useState(false);
 
   useEffect(() => {
     if (musicId) {
@@ -35,7 +37,30 @@ export default function MusicPlayer({ musicId, onClose }) {
       }
     };
 
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      // Track completion
+      if (musicId) {
+        interactionTracker.trackComplete(musicId, 'music', audio.currentTime);
+      }
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      // Track play interaction (only once per session)
+      if (musicId && !hasTrackedPlay) {
+        interactionTracker.trackPlay(musicId, 'music');
+        setHasTrackedPlay(true);
+      }
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      // Track pause interaction
+      if (musicId) {
+        interactionTracker.trackPause(musicId, 'music', audio.currentTime);
+      }
+    };
 
     const handleCanPlay = () => {
       if (audio.duration && !isNaN(audio.duration) && audio.duration !== Infinity) {
@@ -55,6 +80,8 @@ export default function MusicPlayer({ musicId, onClose }) {
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('loadeddata', handleLoadedData);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
@@ -63,8 +90,10 @@ export default function MusicPlayer({ musicId, onClose }) {
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('loadeddata', handleLoadedData);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
     };
-  }, [music]);
+  }, [music, musicId, hasTrackedPlay]);
 
   const loadMusic = async () => {
     const token = localStorage.getItem('access_token');

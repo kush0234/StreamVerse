@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import Navbar from '@/components/Navbar';
+import VideoPlayer from '@/components/VideoPlayer';
+import interactionTracker from '@/lib/interactionTracker';
 
 export default function DetailPage() {
   const router = useRouter();
@@ -19,6 +21,12 @@ export default function DetailPage() {
 
   useEffect(() => {
     loadContent();
+    
+    // Initialize interaction tracker with current profile
+    const profile = JSON.parse(localStorage.getItem('selected_profile'));
+    if (profile) {
+      interactionTracker.updateProfile(profile.id);
+    }
   }, [params.id]);
 
   // Re-check watchlist status when page becomes visible (user returns from another tab/page)
@@ -62,6 +70,12 @@ export default function DetailPage() {
       // Load similar content
       const similarData = await api.getSimilarContent(token, params.id);
       setSimilarContent(similarData);
+
+      // Track view interaction
+      const profile = JSON.parse(localStorage.getItem('selected_profile'));
+      if (profile) {
+        interactionTracker.trackView(params.id, 'video');
+      }
     } catch (err) {
       console.error('Failed to load content', err);
     } finally {
@@ -100,8 +114,12 @@ export default function DetailPage() {
     try {
       if (previousState) {
         await api.removeFromWatchlist(token, profile.id, params.id);
+        // Track watchlist removal
+        interactionTracker.trackWatchlistRemove(params.id, 'video');
       } else {
         await api.addToWatchlist(token, profile.id, params.id);
+        // Track watchlist addition
+        interactionTracker.trackWatchlistAdd(params.id, 'video');
       }
       // Verify the change by re-checking watchlist status
       await checkWatchlistStatus();
@@ -121,6 +139,34 @@ export default function DetailPage() {
       setCurrentEpisode(null);
     }
     setShowPlayer(true);
+  };
+
+  // Progress tracking for continue watching
+  const handleTimeUpdate = async (currentTime) => {
+    const token = localStorage.getItem('access_token');
+    const profile = JSON.parse(localStorage.getItem('selected_profile'));
+    
+    if (!profile || !content) return;
+
+    const videoId = currentEpisode ? content.id : content.id;
+    const episodeId = currentEpisode ? currentEpisode.id : null;
+    const duration = currentEpisode ? currentEpisode.duration : content.duration;
+    
+    // Save progress every 10 seconds to avoid too many API calls
+    if (Math.floor(currentTime) % 10 === 0) {
+      await api.saveVideoProgress(token, profile.id, videoId, currentTime, duration, episodeId);
+    }
+  };
+
+  // Handle video end
+  const handleVideoEnd = () => {
+    // Track completion and close player
+    const contentId = currentEpisode ? currentEpisode.id : content.id;
+    const contentType = currentEpisode ? 'episode' : 'video';
+    interactionTracker.trackComplete(contentId, contentType);
+    
+    setShowPlayer(false);
+    setCurrentEpisode(null);
   };
 
   // Get unique seasons
@@ -564,15 +610,17 @@ export default function DetailPage() {
             {currentEpisode ? (
               /* Episode Player */
               currentEpisode.video_file ? (
-                <video
-                  controls
-                  autoPlay
-                  className="w-full h-full max-h-screen"
-                  poster={currentEpisode.thumbnail}
-                >
-                  <source src={currentEpisode.video_file} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                <VideoPlayer
+                  videoData={{
+                    is_public_domain: true, // Assuming episodes are public domain
+                    video_url: currentEpisode.video_file,
+                    title: `${content.title} - S${currentEpisode.season_number}E${currentEpisode.episode_number}: ${currentEpisode.title}`,
+                    thumbnail: currentEpisode.thumbnail,
+                    id: currentEpisode.id
+                  }}
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={handleVideoEnd}
+                />
               ) : (
                 <div className="text-center text-gray-400">
                   <svg className="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -584,15 +632,17 @@ export default function DetailPage() {
             ) : (
               /* Movie Player */
               content.video_file ? (
-                <video
-                  controls
-                  autoPlay
-                  className="w-full h-full max-h-screen"
-                  poster={content.thumbnail}
-                >
-                  <source src={content.video_file} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                <VideoPlayer
+                  videoData={{
+                    is_public_domain: content.is_public_domain || true,
+                    video_url: content.video_file,
+                    title: content.title,
+                    thumbnail: content.thumbnail,
+                    id: content.id
+                  }}
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={handleVideoEnd}
+                />
               ) : (
                 <div className="text-center text-gray-400">
                   <svg className="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
