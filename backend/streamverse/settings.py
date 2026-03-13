@@ -224,3 +224,8 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 # Razorpay Payment Gateway Configuration
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', '')
+
+# Session Configuration
+SESSION_COOKIE_AGE = 7200  # 1 hour (in seconds)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Logout when browser closes
+SESSION_SAVE_EVERY_REQUEST = True  # Reset timeout on each request
