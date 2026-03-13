@@ -26,7 +26,7 @@ export default function MusicManagement() {
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this music?')) return;
-    
+
     try {
       await adminApi.deleteMusic(id);
       fetchMusic();
@@ -54,6 +54,7 @@ export default function MusicManagement() {
         <table className="w-full">
           <thead className="bg-gray-900">
             <tr>
+              <th className="px-4 py-3 text-left text-white">Sr No</th>
               <th className="px-6 py-3 text-left text-white">Title</th>
               <th className="px-6 py-3 text-left text-white">Artist</th>
               <th className="px-6 py-3 text-left text-white">Album</th>
@@ -63,8 +64,9 @@ export default function MusicManagement() {
             </tr>
           </thead>
           <tbody>
-            {music.map((item) => (
+            {music.map((item, index) => (
               <tr key={item.id} className="border-t border-gray-700">
+                <td className="px-4 py-4 text-gray-300">{index + 1}</td>
                 <td className="px-6 py-4 text-white">{item.title}</td>
                 <td className="px-6 py-4 text-gray-300">{item.artist}</td>
                 <td className="px-6 py-4 text-gray-300">{item.album || 'N/A'}</td>

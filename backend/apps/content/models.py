@@ -54,28 +54,37 @@ class VideoContent(models.Model):
     release_date = models.DateField()
     rating = models.FloatField(default=0)
     content_type = models.CharField(max_length=20, choices=CONTENT_TYPE_CHOICES)
-    thumbnail = CloudinaryField('image', blank=True, null=True)
+    thumbnail = CloudinaryField(
+        'image', 
+        blank=True, 
+        null=True,
+        help_text="🖼️ Upload thumbnail image (required for both local and YouTube content)"
+    )
     video_url = CloudinaryField('video', blank=True, null=True)
     trailer_url = CloudinaryField('video', blank=True, null=True)
-    duration = models.IntegerField(blank=True, null=True)
+    duration = models.IntegerField(
+        blank=True, 
+        null=True,
+        help_text="Duration in minutes (auto-filled for local videos, manual for YouTube)"
+    )
     view_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # Hybrid storage fields
     is_public_domain = models.BooleanField(
         default=False,
-        help_text="If True, video is stored locally. If False, uses YouTube trailer."
+        help_text="✅ Check for LOCAL video uploads | ❌ Uncheck for YouTube trailers only"
     )
     video_file = models.FileField(
         upload_to='videos/',
         blank=True,
         null=True,
-        help_text="Local video file for public domain content"
+        help_text="📁 Upload your local video file here (only for public domain content)"
     )
     youtube_trailer_url = models.URLField(
         blank=True,
         null=True,
-        help_text="YouTube embed URL for non-public domain content trailers"
+        help_text="🎬 YouTube embed URL (format: https://www.youtube.com/embed/VIDEO_ID)"
     )
     
     # Coming Soon feature

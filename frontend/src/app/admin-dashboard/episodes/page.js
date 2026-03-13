@@ -26,7 +26,7 @@ export default function EpisodesManagement() {
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this episode?')) return;
-    
+
     try {
       await adminApi.deleteEpisode(id);
       fetchEpisodes();
@@ -54,6 +54,7 @@ export default function EpisodesManagement() {
         <table className="w-full">
           <thead className="bg-gray-900">
             <tr>
+              <th className="px-4 py-3 text-left text-white">Sr No</th>
               <th className="px-6 py-3 text-left text-white">Series</th>
               <th className="px-6 py-3 text-left text-white">Episode Title</th>
               <th className="px-6 py-3 text-left text-white">Season</th>
@@ -63,8 +64,9 @@ export default function EpisodesManagement() {
             </tr>
           </thead>
           <tbody>
-            {episodes.map((episode) => (
+            {episodes.map((episode, index) => (
               <tr key={episode.id} className="border-t border-gray-700">
+                <td className="px-4 py-4 text-gray-300">{index + 1}</td>
                 <td className="px-6 py-4 text-white">{episode.series_title}</td>
                 <td className="px-6 py-4 text-gray-300">{episode.title}</td>
                 <td className="px-6 py-4 text-gray-300">S{episode.season_number}</td>

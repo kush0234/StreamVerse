@@ -33,7 +33,7 @@ export default function AddMusic() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value || '' }));
   };
 
   const handleFileChange = (e) => {
@@ -198,7 +198,7 @@ export default function AddMusic() {
                 <input
                   type="text"
                   name="title"
-                  value={formData.title}
+                  value={formData.title || ''}
                   onChange={handleChange}
                   placeholder="Enter the music title"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded"
@@ -212,7 +212,7 @@ export default function AddMusic() {
                   <input
                     type="text"
                     name="artist"
-                    value={formData.artist}
+                    value={formData.artist || ''}
                     onChange={handleChange}
                     placeholder="Enter the artist name"
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded"
@@ -225,7 +225,7 @@ export default function AddMusic() {
                   <input
                     type="text"
                     name="album"
-                    value={formData.album}
+                    value={formData.album || ''}
                     onChange={handleChange}
                     placeholder="Enter the album name (optional)"
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded"
@@ -302,7 +302,7 @@ export default function AddMusic() {
                   <input
                     type="text"
                     name="genre"
-                    value={formData.genre}
+                    value={formData.genre || ''}
                     onChange={handleChange}
                     placeholder="e.g., Pop, Rock, Jazz"
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded"
@@ -316,7 +316,7 @@ export default function AddMusic() {
                     <input
                       type="number"
                       name="duration"
-                      value={formData.duration}
+                      value={formData.duration || ''}
                       onChange={handleChange}
                       min="1"
                       placeholder="Auto-calculated from audio"

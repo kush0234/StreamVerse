@@ -115,7 +115,7 @@ export default function EditEpisode() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value || '' }));
 
     // Track selected series
     if (name === 'series') {
@@ -326,7 +326,7 @@ export default function EditEpisode() {
                 <input
                   type="text"
                   name="title"
-                  value={formData.title}
+                  value={formData.title || ''}
                   onChange={handleChange}
                   placeholder="Enter the episode title"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded"
@@ -338,7 +338,7 @@ export default function EditEpisode() {
                 <label className="block text-white mb-2">Description <span className="text-red-500">*</span></label>
                 <textarea
                   name="description"
-                  value={formData.description}
+                  value={formData.description || ''}
                   onChange={handleChange}
                   rows="4"
                   placeholder="Provide a detailed description of this episode..."
@@ -451,7 +451,7 @@ export default function EditEpisode() {
                   <input
                     type="number"
                     name="season_number"
-                    value={formData.season_number}
+                    value={formData.season_number || ''}
                     onChange={handleChange}
                     min="1"
                     placeholder="e.g., 1"
@@ -465,7 +465,7 @@ export default function EditEpisode() {
                   <input
                     type="number"
                     name="episode_number"
-                    value={formData.episode_number}
+                    value={formData.episode_number || ''}
                     onChange={handleChange}
                     min="1"
                     placeholder="e.g., 1"
@@ -481,7 +481,7 @@ export default function EditEpisode() {
                   <input
                     type="number"
                     name="duration"
-                    value={formData.duration}
+                    value={formData.duration || ''}
                     onChange={handleChange}
                     min="1"
                     placeholder={selectedSeries?.is_public_domain ? "Auto-calculated from video" : "Enter duration"}

@@ -1,0 +1,78 @@
+{% extends "admin/change_form.html" %}
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            // Add custom styling and instructions
+            var publicDomainField = $('.field-is_public_domain');
+            if (publicDomainField.length) {
+                publicDomainField.before('<div class="help" style="background: #000000; padding: 15px; margin: 0px 0; border-radius: 8px;"><h3 style="margin-top: 0; color: #1976D2;">📋 Video Upload Instructions</h3><p><strong>For LOCAL video uploads:</strong> ✅ Check "Public Domain" and upload your video file</p><p><strong>For YouTube trailers:</strong> ❌ Uncheck "Public Domain" and add YouTube embed URL</p><p><em>The form will automatically show/hide relevant fields based on your choice.</em></p></div>');
+            }
+
+            // Function to toggle field visibility
+            function toggleVideoFields() {
+                var isPublicDomain = $('#id_is_public_domain').is(':checked');
+
+                if (isPublicDomain) {
+                    // Show local upload fields
+                    $('.field-video_file, .field-duration').show();
+                    $('.field-youtube_trailer_url').hide();
+
+                    // Update section headers
+                    $('fieldset h2:contains("Step 4A")').parent().show();
+                    $('fieldset h2:contains("Step 4B")').parent().hide();
+
+                    // Clear YouTube URL
+                    $('#id_youtube_trailer_url').val('');
+                } else {
+                    // Show YouTube fields
+                    $('.field-youtube_trailer_url').show();
+                    $('.field-video_file, .field-duration').hide();
+
+                    // Update section headers
+                    $('fieldset h2:contains("Step 4A")').parent().hide();
+                    $('fieldset h2:contains("Step 4B")').parent().show();
+
+                    // Clear local file
+                    $('#id_video_file').val('');
+                    $('#id_duration').val('');
+                }
+            }
+
+            // Initial toggle
+            toggleVideoFields();
+
+            // Toggle on checkbox change
+            $('#id_is_public_domain').change(toggleVideoFields);
+        });
+    })(django.jQuery);
+</script>
+
+<style>
+    .field-is_public_domain {
+        background: #000000;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+
+    .field-is_public_domain label {
+        font-weight: bold;
+        font-size: 16px;
+        color: #155724;
+    }
+
+    .field-video_file,
+    .field-youtube_trailer_url {
+        transition: all 0.3s ease;
+    }
+
+    fieldset h2 {
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 8px;
+    }
+</style>
+{% endblock %}

@@ -182,6 +182,7 @@ export default function AdminFeedbackPage() {
             <table className="w-full">
               <thead className="bg-gray-700">
                 <tr>
+                  <th className="px-4 py-3 text-left text-white">Sr No</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                     Feedback
                   </th>
@@ -203,8 +204,10 @@ export default function AdminFeedbackPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {feedbacks.map((feedback) => (
+                {feedbacks.map((feedback, index) => (
                   <tr key={feedback.id} className="hover:bg-gray-700/50 transition-colors">
+                    <td className="px-4 py-4 text-gray-300">{index + 1}</td>
+
                     <td className="px-4 py-4">
                       <div className="flex items-start gap-2">
                         {feedback.is_pinned && (

@@ -77,6 +77,7 @@ export default function VideosManagement() {
         <table className="w-full">
           <thead className="bg-gray-900">
             <tr>
+              <th className="px-4 py-3 text-left text-white">Sr No</th>
               <th className="px-6 py-3 text-left text-white">Title</th>
               <th className="px-6 py-3 text-left text-white">Type</th>
               <th className="px-6 py-3 text-left text-white">Status</th>
@@ -88,8 +89,9 @@ export default function VideosManagement() {
             </tr>
           </thead>
           <tbody>
-            {videos.map((video) => (
+            {videos.map((video, index) => (
               <tr key={video.id} className="border-t border-gray-700">
+                <td className="px-4 py-4 text-gray-300">{index + 1}</td>
                 <td className="px-6 py-4 text-white">
                   {video.title}
                   {video.is_coming_soon && (

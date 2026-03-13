@@ -44,9 +44,12 @@ class VideoContentAdmin(admin.ModelAdmin):
     filter_horizontal = ["tags"]
     actions = ["generate_tags_action", "approve_content", "reject_content", "mark_as_coming_soon"]
 
+    class Media:
+        js = ('admin/js/video_content_admin.js',)
+
     fieldsets = (
         (
-            "Basic Information",
+            "Step 1: Basic Information",
             {
                 "fields": (
                     "title",
@@ -59,6 +62,46 @@ class VideoContentAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Step 2: Choose Content Type",
+            {
+                "fields": (
+                    "is_public_domain",
+                ),
+                "description": "✅ Check 'Public Domain' for LOCAL video uploads | ❌ Uncheck for YouTube trailers only",
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "Step 3: Thumbnail (Required for all content)",
+            {
+                "fields": (
+                    "thumbnail",
+                ),
+                "description": "🖼️ Upload thumbnail image (required for both local and YouTube content)",
+            },
+        ),
+        (
+            "Step 4A: Local Video Upload (Only if Public Domain is checked)",
+            {
+                "fields": (
+                    "video_file",
+                    "duration",
+                ),
+                "description": "📁 Upload your local video file here. Duration will be auto-calculated from the video file.",
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Step 4B: YouTube Trailer (Only if Public Domain is unchecked)",
+            {
+                "fields": (
+                    "youtube_trailer_url",
+                ),
+                "description": "🎬 Add YouTube embed URL for movie trailers. Duration is not needed - YouTube handles playback timing.",
+                "classes": ("collapse",),
+            },
+        ),
+        (
             "Coming Soon Feature",
             {
                 "fields": (
@@ -66,6 +109,7 @@ class VideoContentAdmin(admin.ModelAdmin):
                     "expected_release_date",
                 ),
                 "description": "Mark content as 'Coming Soon' - video upload becomes optional",
+                "classes": ("collapse",),
             },
         ),
         (
@@ -76,28 +120,7 @@ class VideoContentAdmin(admin.ModelAdmin):
                     "submitted_for_approval_at",
                 ),
                 "description": "Content approval status - Only SuperAdmin can approve",
-                "classes": ("wide",),
-            },
-        ),
-        (
-            "Streaming Type",
-            {
-                "fields": (
-                    "is_public_domain",
-                    "youtube_trailer_url",
-                ),
-                "description": "Enable public domain for full streaming OR use YouTube trailer for popular movies",
-            },
-        ),
-        (
-            "Media Files (Upload Only for Public Domain)",
-            {
-                "fields": (
-                    "video_file",
-                    "thumbnail",
-                    "trailer_url",
-                ),
-                "description": "Upload main video only if it is public domain content",
+                "classes": ("collapse",),
             },
         ),
         (
@@ -105,9 +128,10 @@ class VideoContentAdmin(admin.ModelAdmin):
             {
                 "fields": ("tags",),
                 "description": "Tags are auto-generated but can be manually edited",
+                "classes": ("collapse",),
             },
         ),
-        ("Additional Info", {"fields": ("duration", "view_count")}),
+        ("Additional Info", {"fields": ("view_count",), "classes": ("collapse",)}),
     )
 
     def get_inlines(self, request, obj):
@@ -116,8 +140,27 @@ class VideoContentAdmin(admin.ModelAdmin):
         return []
     
     def save_model(self, request, obj, form, change):
-        """Auto-generate tags when saving content"""
+        """Auto-generate tags when saving content and validate fields"""
+        
+        # Validation logic
+        if obj.is_public_domain:
+            # For local uploads, clear YouTube URL
+            obj.youtube_trailer_url = ""
+            if not obj.is_coming_soon and not obj.video_file:
+                from django.contrib import messages
+                messages.warning(request, "⚠️ Public domain content should have a video file uploaded.")
+        else:
+            # For YouTube trailers, clear local file
+            if obj.video_file:
+                obj.video_file = None
+            if obj.duration:
+                obj.duration = None
+            if not obj.is_coming_soon and not obj.youtube_trailer_url:
+                from django.contrib import messages
+                messages.warning(request, "⚠️ Non-public domain content should have a YouTube trailer URL.")
+        
         super().save_model(request, obj, form, change)
+        
         # Generate tags if none exist
         if not obj.tags.exists():
             AutoTagger.apply_tags_to_content(obj)
@@ -174,10 +217,13 @@ class EpisodeAdmin(admin.ModelAdmin):
             "Media Files",
             {
                 "fields": ("video_file", "thumbnail"),
-                "description": "Upload episode video and thumbnail image",
+                "description": "📁 Upload episode video file and thumbnail. Duration will be auto-calculated from video.",
             },
         ),
-        ("Additional Info", {"fields": ("duration",)}),
+        ("Additional Info", {
+            "fields": ("duration",),
+            "description": "Duration in seconds - auto-calculated from uploaded video file"
+        }),
     )
 
 
@@ -197,10 +243,13 @@ class MusicAdmin(admin.ModelAdmin):
             "Media Files",
             {
                 "fields": ("audio_file", "thumbnail"),
-                "description": "Upload audio file and album cover/thumbnail",
+                "description": "🎵 Upload audio file and album cover. Duration will be auto-calculated from audio file.",
             },
         ),
-        ("Additional Info", {"fields": ("duration", "play_count")}),
+        ("Additional Info", {
+            "fields": ("duration", "play_count"),
+            "description": "Duration in seconds - auto-calculated from uploaded audio file"
+        }),
     )
 
 
