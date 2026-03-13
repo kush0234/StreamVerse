@@ -36,7 +36,9 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 staticfiles/
-static/
+# Only ignore Django's collected static files, not app static files
+/static/
+backend/static/
 
 # Node.js
 node_modules/
