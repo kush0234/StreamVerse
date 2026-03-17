@@ -16,12 +16,11 @@ export default function DetailPage() {
   const [inWatchlist, setInWatchlist] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [similarContent, setSimilarContent] = useState([]);
-  const [showPlayer, setShowPlayer] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState(null);
 
   useEffect(() => {
     loadContent();
-    
+
     // Initialize interaction tracker with current profile
     const profile = JSON.parse(localStorage.getItem('selected_profile'));
     if (profile) {
@@ -131,42 +130,31 @@ export default function DetailPage() {
     }
   };
 
-  const handlePlay = (episodeId = null) => {
-    if (episodeId) {
-      const episode = episodes.find(ep => ep.id === episodeId);
-      setCurrentEpisode(episode);
-    } else {
-      setCurrentEpisode(null);
-    }
-    setShowPlayer(true);
-  };
-
   // Progress tracking for continue watching
+  const lastSavedTimeRef = { current: 0 };
+
   const handleTimeUpdate = async (currentTime) => {
     const token = localStorage.getItem('access_token');
     const profile = JSON.parse(localStorage.getItem('selected_profile'));
-    
+
     if (!profile || !content) return;
 
-    const videoId = currentEpisode ? content.id : content.id;
+    // Save every 10 seconds using a ref to track last saved time
+    if (currentTime - lastSavedTimeRef.current < 10) return;
+    lastSavedTimeRef.current = currentTime;
+
+    const videoId = content.id;
     const episodeId = currentEpisode ? currentEpisode.id : null;
     const duration = currentEpisode ? currentEpisode.duration : content.duration;
-    
-    // Save progress every 10 seconds to avoid too many API calls
-    if (Math.floor(currentTime) % 10 === 0) {
-      await api.saveVideoProgress(token, profile.id, videoId, currentTime, duration, episodeId);
-    }
+
+    await api.saveVideoProgress(token, profile.id, videoId, currentTime, duration, episodeId);
   };
 
   // Handle video end
   const handleVideoEnd = () => {
-    // Track completion and close player
     const contentId = currentEpisode ? currentEpisode.id : content.id;
     const contentType = currentEpisode ? 'episode' : 'video';
     interactionTracker.trackComplete(contentId, contentType);
-    
-    setShowPlayer(false);
-    setCurrentEpisode(null);
   };
 
   // Get unique seasons
@@ -203,7 +191,7 @@ export default function DetailPage() {
       <Navbar />
 
       {/* Hero Section with Backdrop */}
-      <div className="relative h-[70vh]">
+      <div className="relative h-[90vh]">
         {content.thumbnail && (
           <div className="absolute inset-0">
             <img
@@ -253,7 +241,7 @@ export default function DetailPage() {
 
                 <div className="flex gap-4">
                   <button
-                    onClick={() => handlePlay()}
+                    onClick={() => document.getElementById('video-section')?.scrollIntoView({ behavior: 'smooth' })}
                     className="flex items-center gap-3 bg-red-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-red-700 transition"
                   >
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -290,8 +278,8 @@ export default function DetailPage() {
       </div>
 
       {/* Trailer or Video Player Section */}
-      <div className="bg-gray-900 py-12">
-        <div className="max-w-7xl mx-auto px-12">
+      <div id="video-section" className="bg-gray-900 py-12">
+        <div className="max-w-5xl mx-auto px-12">
           {content.youtube_trailer_url ? (
             /* Show Trailer */
             <div>
@@ -317,17 +305,50 @@ export default function DetailPage() {
                 <div>
                   <h2 className="text-3xl font-bold mb-8">Episodes</h2>
 
+                  {/* Inline episode player */}
+                  {currentEpisode && (
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xl font-semibold text-white">
+                          S{currentEpisode.season_number}E{currentEpisode.episode_number}: {currentEpisode.title}
+                        </h3>
+                        <button
+                          onClick={() => setCurrentEpisode(null)}
+                          className="text-gray-400 hover:text-white transition text-sm"
+                        >
+                          Close ✕
+                        </button>
+                      </div>
+                      {currentEpisode.video_file ? (
+                        <VideoPlayer
+                          videoData={{
+                            is_public_domain: true,
+                            video_url: currentEpisode.video_file,
+                            title: `${content.title} - S${currentEpisode.season_number}E${currentEpisode.episode_number}: ${currentEpisode.title}`,
+                            thumbnail: currentEpisode.thumbnail,
+                            id: currentEpisode.id,
+                          }}
+                          onTimeUpdate={handleTimeUpdate}
+                          onEnded={handleVideoEnd}
+                        />
+                      ) : (
+                        <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
+                          <p className="text-gray-400">Episode video not available</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Season Selector */}
                   <div className="flex gap-4 mb-8 overflow-x-auto pb-4">
                     {seasons.map((season) => (
                       <button
                         key={season}
                         onClick={() => setSelectedSeason(season)}
-                        className={`px-6 py-3 rounded-lg font-bold whitespace-nowrap transition ${
-                          selectedSeason === season
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-800 text-white hover:bg-gray-700'
-                        }`}
+                        className={`px-6 py-3 rounded-lg font-bold whitespace-nowrap transition ${selectedSeason === season
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-800 text-white hover:bg-gray-700'
+                          }`}
                       >
                         Season {season}
                       </button>
@@ -339,8 +360,8 @@ export default function DetailPage() {
                     {filteredEpisodes.map((episode) => (
                       <div
                         key={episode.id}
-                        className="group flex gap-6 bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition cursor-pointer"
-                        onClick={() => handlePlay(episode.id)}
+                        className={`group flex gap-6 bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition cursor-pointer ${currentEpisode?.id === episode.id ? 'ring-2 ring-red-600' : ''}`}
+                        onClick={() => setCurrentEpisode(episode)}
                       >
                         <div className="flex-shrink-0 w-48 aspect-video bg-gray-700 rounded overflow-hidden relative">
                           {episode.thumbnail ? (
@@ -379,28 +400,26 @@ export default function DetailPage() {
                   </div>
                 </div>
               ) : (
-                /* Movie - Show Play Button instead of embedded player */
+                /* Movie - Inline Video Player */
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Watch Now</h2>
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl relative group cursor-pointer"
-                       onClick={() => handlePlay()}>
-                    <img
-                      src={content.thumbnail}
-                      alt={content.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
+                  {content.video_file ? (
+                    <VideoPlayer
+                      videoData={{
+                        is_public_domain: content.is_public_domain || true,
+                        video_url: content.video_file,
+                        title: content.title,
+                        thumbnail: content.thumbnail,
+                        id: content.id,
+                      }}
+                      onTimeUpdate={handleTimeUpdate}
+                      onEnded={handleVideoEnd}
                     />
-                    <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition">
-                          <svg className="w-12 h-12 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                          </svg>
-                        </div>
-                        <p className="text-white text-xl font-bold">Click to Watch</p>
-                      </div>
+                  ) : (
+                    <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-400 text-lg">Video not available</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
@@ -416,11 +435,10 @@ export default function DetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-2 font-semibold text-lg transition relative ${
-                  activeTab === tab.id
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
+                className={`py-4 px-2 font-semibold text-lg transition relative ${activeTab === tab.id
+                  ? 'text-white'
+                  : 'text-gray-400 hover:text-gray-200'
+                  }`}
               >
                 {tab.label}
                 {activeTab === tab.id && (
@@ -580,8 +598,8 @@ export default function DetailPage() {
         </div>
       </div>
 
-      {/* Video Player Modal */}
-      {showPlayer && (
+      {/* Video Player Modal - removed, using inline player */}
+      {false && (
         <div className="fixed inset-0 bg-black z-50 flex flex-col">
           {/* Close Button */}
           <div className="absolute top-4 right-4 z-10">
@@ -665,9 +683,8 @@ export default function DetailPage() {
                     onClick={() => {
                       setCurrentEpisode(episode);
                     }}
-                    className={`flex-shrink-0 w-40 ${
-                      currentEpisode?.id === episode.id ? 'ring-2 ring-red-600' : ''
-                    }`}
+                    className={`flex-shrink-0 w-40 ${currentEpisode?.id === episode.id ? 'ring-2 ring-red-600' : ''
+                      }`}
                   >
                     <div className="relative aspect-video bg-gray-800 rounded overflow-hidden mb-2">
                       {episode.thumbnail ? (
