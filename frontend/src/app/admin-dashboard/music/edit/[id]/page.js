@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminApi } from '@/lib/adminApi';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 export default function EditMusic() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
@@ -77,7 +79,7 @@ export default function EditMusic() {
         }
       }
     } catch (err) {
-      alert('Failed to fetch music details');
+      toast.error('Failed to fetch music details');
     } finally {
       setFetching(false);
     }
@@ -109,7 +111,7 @@ export default function EditMusic() {
 
         audio.onerror = function () {
           setCalculatingDuration(false);
-          alert('Could not read audio metadata. Please enter duration manually.');
+          toast.warning('Could not read audio metadata. Please enter duration manually.');
         };
 
         audio.src = URL.createObjectURL(file);
@@ -137,7 +139,7 @@ export default function EditMusic() {
       setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(prev => Math.min(prev + 1, steps.length));
     } else {
-      alert('Please fill in all required fields before proceeding.');
+      toast.warning('Please fill in all required fields before proceeding.');
     }
   };
 
@@ -153,7 +155,7 @@ export default function EditMusic() {
 
   const handleFinalSubmit = async () => {
     if (!validateStep(4)) {
-      alert('Please complete all required fields before updating.');
+      toast.warning('Please complete all required fields before updating.');
       return;
     }
 
@@ -178,10 +180,10 @@ export default function EditMusic() {
       }
 
       await adminApi.updateMusicWithFiles(params.id, formDataToSend);
-      alert('Music updated successfully!');
+      toast.success('Music updated successfully!');
       router.push('/admin-dashboard/music');
     } catch (err) {
-      alert(err.message || 'Failed to update music');
+      toast.error(err.message || 'Failed to update music');
     } finally {
       setLoading(false);
     }
@@ -198,14 +200,7 @@ export default function EditMusic() {
   return (
     <div className="flex flex-col items-center px-4">
       <div className="w-full max-w-4xl">
-        <Link
-          href="/admin-dashboard/music"
-          className="flex items-center gap-2 text-gray-400 hover:text-white mb-2"
-        >
-          <ArrowLeft size={20} />
-          Back to Music
-        </Link>
-
+        <Breadcrumb items={[{ label: 'Music', href: '/admin-dashboard/music' }, { label: 'Edit Music' }]} />
         <h1 className="text-3xl font-bold text-white mb-4 text-center">Edit Music</h1>
 
         {/* Step Progress Indicator */}

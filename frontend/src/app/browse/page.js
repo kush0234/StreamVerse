@@ -26,7 +26,7 @@ function BrowseContent() {
   const [selectedTag, setSelectedTag] = useState(null);
   const [heroIndex, setHeroIndex] = useState(0);
   const [selectedMusicId, setSelectedMusicId] = useState(null);
-  
+
   // New recommendation states
   const [recommendations, setRecommendations] = useState({
     continue_watching: [],
@@ -38,11 +38,11 @@ function BrowseContent() {
     because_you_listened: []
   });
   const [useEnhancedRecommendations, setUseEnhancedRecommendations] = useState(true);
-  
+
   const type = searchParams.get('type');
 
   // Get carousel items with safety check
-  const carouselItems = useEnhancedRecommendations && recommendations.trending_videos.length > 0 
+  const carouselItems = useEnhancedRecommendations && recommendations.trending_videos.length > 0
     ? recommendations.trending_videos.slice(0, Math.min(5, recommendations.trending_videos.length))
     : trending.slice(0, Math.min(5, trending.length));
   const maxCarouselIndex = carouselItems.length - 1;
@@ -85,7 +85,7 @@ function BrowseContent() {
       router.push('/profiles');
       return;
     }
-    
+
     // Update interaction tracker with current profile
     try {
       const profileData = JSON.parse(profile);
@@ -93,13 +93,39 @@ function BrowseContent() {
     } catch (e) {
       console.warn('Failed to parse profile for interaction tracker');
     }
-    
+
     loadContent();
   }, [router, type, selectedGenre, selectedTag]);
 
   const loadContent = async () => {
     const token = localStorage.getItem('access_token');
-    const profile = JSON.parse(localStorage.getItem('selected_profile'));
+    let profile;
+    try {
+      profile = JSON.parse(localStorage.getItem('selected_profile'));
+    } catch (e) {
+      profile = null;
+    }
+
+    // Validate profile against server — if stale, redirect to profile selection
+    if (profile) {
+      try {
+        const profiles = await api.getProfiles(token);
+        const validProfile = Array.isArray(profiles) && profiles.find(p => p.id === profile.id);
+        if (!validProfile) {
+          // Stale profile ID — pick the first available or redirect
+          if (profiles.length > 0) {
+            profile = profiles[0];
+            localStorage.setItem('selected_profile', JSON.stringify(profile));
+          } else {
+            router.push('/profiles');
+            return;
+          }
+        }
+      } catch (e) {
+        // If we can't validate, proceed with stored profile
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -131,7 +157,7 @@ function BrowseContent() {
           const homeRecommendations = await api.getHomeRecommendations(token, profile.id);
           setRecommendations(homeRecommendations);
           setUseEnhancedRecommendations(true);
-          
+
           // Also load traditional data as fallback
           const [movieData, seriesData, musicData, comingSoonData] = await Promise.all([
             api.getVideos(token, 'MOVIE'),
@@ -139,16 +165,16 @@ function BrowseContent() {
             api.getMusic(token),
             api.getComingSoon(token),
           ]);
-          
+
           setMovies(movieData || []);
           setSeries(seriesData || []);
           setMusic(musicData || []);
           setComingSoon(comingSoonData || []);
-          
+
         } catch (recommendationError) {
           console.warn('Enhanced recommendations failed, falling back to traditional:', recommendationError);
           setUseEnhancedRecommendations(false);
-          
+
           // Fallback to traditional API calls
           const [movieData, seriesData, musicData, trendingData, continueData, recentData, comingSoonData] = await Promise.all([
             api.getVideos(token, 'MOVIE'),
@@ -159,7 +185,7 @@ function BrowseContent() {
             api.getRecentlyWatched(token, profile.id),
             api.getComingSoon(token),
           ]);
-          
+
           setMovies(movieData || []);
           setSeries(seriesData || []);
           setMusic(musicData || []);
@@ -341,9 +367,9 @@ function BrowseContent() {
             <>
               {/* Continue Watching - Enhanced */}
               {recommendations.continue_watching.length > 0 && (
-                <RecommendationRow 
-                  title="Continue Watching" 
-                  items={recommendations.continue_watching} 
+                <RecommendationRow
+                  title="Continue Watching"
+                  items={recommendations.continue_watching}
                   type="continue_watching"
                 />
               )}
@@ -418,16 +444,16 @@ function BrowseContent() {
           {/* No content message */}
           {((useEnhancedRecommendations && Object.values(recommendations).every(arr => arr.length === 0)) ||
             (!useEnhancedRecommendations && movies.length === 0 && series.length === 0)) && (
-            <div className="text-center py-20">
-              <div className="inline-block p-6 bg-gray-900 rounded-full mb-4">
-                <svg className="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                </svg>
+              <div className="text-center py-20">
+                <div className="inline-block p-6 bg-gray-900 rounded-full mb-4">
+                  <svg className="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-xl">No content available yet.</p>
+                <p className="text-gray-500 mt-2">Add some content from the Django admin panel.</p>
               </div>
-              <p className="text-gray-400 text-xl">No content available yet.</p>
-              <p className="text-gray-500 mt-2">Add some content from the Django admin panel.</p>
-            </div>
-          )}
+            )}
         </div>
       </div>
 

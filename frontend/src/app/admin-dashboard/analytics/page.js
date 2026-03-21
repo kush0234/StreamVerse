@@ -2,16 +2,39 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
+import LoadingSpinner from '@/components/admin/LoadingSpinner';
+import { BarChart3, Users, Video, Music, RefreshCw, TrendingUp } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
+
+const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4'];
+
+function StatCard({ icon: Icon, label, value, accent }) {
+  return (
+    <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 flex items-center gap-4">
+      <div className={`p-3 rounded-lg bg-gray-700 ${accent}`}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <p className="text-gray-400 text-sm">{label}</p>
+        <p className="text-white text-2xl font-bold">{value ?? 0}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Analytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  useEffect(() => { fetchAnalytics(); }, []);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const data = await adminApi.getAnalytics();
       setAnalytics(data);
@@ -19,75 +42,117 @@ export default function Analytics() {
       console.error(err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  if (loading) return <div className="text-white">Loading...</div>;
+  if (loading) return <LoadingSpinner message="Loading analytics..." />;
+
+  const videoChartData = (analytics?.most_viewed_videos || [])
+    .slice(0, 8)
+    .map(v => ({ name: v.title.length > 16 ? v.title.slice(0, 16) + '…' : v.title, views: v.view_count }));
+
+  const musicChartData = (analytics?.most_played_music || [])
+    .slice(0, 8)
+    .map(m => ({ name: m.title.length > 16 ? m.title.slice(0, 16) + '…' : m.title, plays: m.play_count }));
+
+  const contentTypePie = [
+    { name: 'Videos', value: analytics?.most_viewed_videos?.length || 0 },
+    { name: 'Music', value: analytics?.most_played_music?.length || 0 },
+  ].filter(d => d.value > 0);
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-white mb-6">Analytics</h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Analytics</h1>
+          <p className="text-gray-400 text-sm mt-0.5">Platform performance overview</p>
+        </div>
+        <button
+          onClick={() => fetchAnalytics(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-700 text-gray-300 hover:text-white rounded-lg text-sm transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+          Refresh
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-4">User Statistics</h2>
-          <div className="space-y-3 text-gray-300">
-            <div className="flex justify-between">
-              <span>New Users This Month:</span>
-              <span className="font-semibold">{analytics?.new_users_this_month || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total Active Users:</span>
-              <span className="font-semibold">{analytics?.total_active_users || 0}</span>
-            </div>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={Users} label="New Users This Month" value={analytics?.new_users_this_month} accent="text-blue-400" />
+        <StatCard icon={Users} label="Total Active Users" value={analytics?.total_active_users} accent="text-blue-400" />
+        <StatCard icon={Video} label="Top Videos Tracked" value={analytics?.most_viewed_videos?.length} accent="text-purple-400" />
+        <StatCard icon={Music} label="Top Tracks Tracked" value={analytics?.most_played_music?.length} accent="text-green-400" />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Most Viewed Videos Bar Chart */}
+        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="flex items-center gap-2 mb-4">
+            <Video size={18} className="text-purple-400" />
+            <h2 className="text-base font-semibold text-white">Most Viewed Videos</h2>
           </div>
+          {videoChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={videoChartData} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
+                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#a78bfa' }} />
+                <Bar dataKey="views" fill="#a855f7" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-16">No video data available</p>
+          )}
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-4">Content Statistics</h2>
-          <div className="space-y-3 text-gray-300">
-            <div className="flex justify-between">
-              <span>Total Videos:</span>
-              <span className="font-semibold">{analytics?.most_viewed_videos?.length || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total Music:</span>
-              <span className="font-semibold">{analytics?.most_played_music?.length || 0}</span>
-            </div>
+        {/* Content Type Pie */}
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 size={18} className="text-yellow-400" />
+            <h2 className="text-base font-semibold text-white">Content Breakdown</h2>
           </div>
+          {contentTypePie.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={contentTypePie} cx="50%" cy="45%" outerRadius={75} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                  {contentTypePie.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} itemStyle={{ color: '#fff' }} />
+                <Legend wrapperStyle={{ color: '#9ca3af', fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-16">No data available</p>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-4">Most Viewed Videos</h2>
-          <div className="space-y-2">
-            {analytics?.most_viewed_videos?.slice(0, 10).map((video, idx) => (
-              <div key={video.id} className="flex justify-between text-gray-300">
-                <span className="truncate">{idx + 1}. {video.title}</span>
-                <span className="text-blue-500 ml-2 flex-shrink-0">{video.view_count} views</span>
-              </div>
-            ))}
-            {(!analytics?.most_viewed_videos || analytics.most_viewed_videos.length === 0) && (
-              <p className="text-gray-500 text-center py-4">No video data available</p>
-            )}
-          </div>
+      {/* Most Played Music Bar Chart */}
+      <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+        <div className="flex items-center gap-2 mb-4">
+          <Music size={18} className="text-green-400" />
+          <h2 className="text-base font-semibold text-white">Most Played Music</h2>
         </div>
-
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-4">Most Played Music</h2>
-          <div className="space-y-2">
-            {analytics?.most_played_music?.slice(0, 10).map((music, idx) => (
-              <div key={music.id} className="flex justify-between text-gray-300">
-                <span className="truncate">{idx + 1}. {music.title} - {music.artist}</span>
-                <span className="text-green-500 ml-2 flex-shrink-0">{music.play_count} plays</span>
-              </div>
-            ))}
-            {(!analytics?.most_played_music || analytics.most_played_music.length === 0) && (
-              <p className="text-gray-500 text-center py-4">No music data available</p>
-            )}
-          </div>
-        </div>
+        {musicChartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={musicChartData} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
+              <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
+              <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#4ade80' }} />
+              <Bar dataKey="plays" fill="#22c55e" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-gray-500 text-sm text-center py-12">No music data available</p>
+        )}
       </div>
     </div>
   );

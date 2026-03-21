@@ -3,7 +3,6 @@ from django.conf import settings
 from django.utils.text import slugify
 from cloudinary.models import CloudinaryField
 
-
 class Tag(models.Model):
     """Tags for categorizing content"""
     CATEGORY_CHOICES = [
@@ -14,7 +13,7 @@ class Tag(models.Model):
         ('DURATION', 'Duration'),
         ('OTHER', 'Other'),
     ]
-    
+
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='OTHER')
@@ -40,7 +39,7 @@ class VideoContent(models.Model):
         ('MOVIE', 'Movie'),
         ('SERIES', 'Web Series'),
     ]
-    
+
     APPROVAL_STATUS_CHOICES = [
         ('PENDING', 'Pending Approval'),
         ('APPROVED', 'Approved'),
@@ -55,21 +54,21 @@ class VideoContent(models.Model):
     rating = models.FloatField(default=0)
     content_type = models.CharField(max_length=20, choices=CONTENT_TYPE_CHOICES)
     thumbnail = CloudinaryField(
-        'image', 
-        blank=True, 
+        'image',
+        blank=True,
         null=True,
         help_text="🖼️ Upload thumbnail image (required for both local and YouTube content)"
     )
     video_url = CloudinaryField('video', blank=True, null=True)
     trailer_url = CloudinaryField('video', blank=True, null=True)
     duration = models.IntegerField(
-        blank=True, 
+        blank=True,
         null=True,
         help_text="Duration in minutes (auto-filled for local videos, manual for YouTube)"
     )
     view_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     # Hybrid storage fields
     is_public_domain = models.BooleanField(
         default=False,
@@ -86,7 +85,7 @@ class VideoContent(models.Model):
         null=True,
         help_text="🎬 YouTube embed URL (format: https://www.youtube.com/embed/VIDEO_ID)"
     )
-    
+
     # Coming Soon feature
     is_coming_soon = models.BooleanField(
         default=False,
@@ -97,7 +96,7 @@ class VideoContent(models.Model):
         null=True,
         help_text='Expected release date for coming soon content'
     )
-    
+
     # Approval workflow
     approval_status = models.CharField(
         max_length=20,
@@ -106,7 +105,7 @@ class VideoContent(models.Model):
         help_text='Content approval status'
     )
     submitted_for_approval_at = models.DateTimeField(blank=True, null=True)
-    
+
     # Tags
     tags = models.ManyToManyField(Tag, blank=True, related_name='videos')
 
@@ -132,7 +131,7 @@ class Episode(models.Model):
     video_url = CloudinaryField('video', blank=True, null=True)
     thumbnail = CloudinaryField('image', blank=True, null=True)
     duration = models.IntegerField()
-    
+
     # Hybrid storage for episodes
     video_file = models.FileField(
         upload_to='episodes/',
@@ -143,6 +142,12 @@ class Episode(models.Model):
 
     class Meta:
         ordering = ['season_number', 'episode_number']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['series', 'season_number', 'episode_number'],
+                name='unique_episode_per_series'
+            )
+        ]
 
     def __str__(self):
         return f"{self.series.title} - S{self.season_number}E{self.episode_number}: {self.title}"
@@ -155,7 +160,6 @@ class Music(models.Model):
     album = models.CharField(max_length=200, blank=True, null=True)
     genre = models.CharField(max_length=100)
     release_date = models.DateField()
-    thumbnail = CloudinaryField('image', blank=True, null=True)
     audio_file = CloudinaryField('raw', blank=True, null=True)
     duration = models.IntegerField(default=0, help_text='Duration in seconds')
     play_count = models.IntegerField(default=0)

@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminApi } from '@/lib/adminApi';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 export default function EditVideo() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
@@ -66,7 +68,7 @@ export default function EditVideo() {
         thumbnail: data.thumbnail || '',
       });
     } catch (err) {
-      alert('Failed to fetch video details');
+      toast.error('Failed to fetch video details');
     } finally {
       setFetching(false);
     }
@@ -101,7 +103,7 @@ export default function EditVideo() {
 
         video.onerror = function () {
           setCalculatingDuration(false);
-          alert('Could not read video metadata. Please enter duration manually.');
+          toast.warning('Could not read video metadata. Please enter duration manually.');
         };
 
         video.src = URL.createObjectURL(file);
@@ -131,7 +133,7 @@ export default function EditVideo() {
       setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(prev => Math.min(prev + 1, steps.length));
     } else {
-      alert('Please fill in all required fields before proceeding.');
+      toast.warning('Please fill in all required fields before proceeding.');
     }
   };
 
@@ -147,7 +149,7 @@ export default function EditVideo() {
 
   const handleFinalSubmit = async () => {
     if (!validateStep(5)) {
-      alert('Please complete all required fields before updating.');
+      toast.warning('Please complete all required fields before updating.');
       return;
     }
 
@@ -172,10 +174,10 @@ export default function EditVideo() {
       }
 
       await adminApi.updateVideoWithFiles(params.id, formDataToSend);
-      alert('Video updated successfully!');
+      toast.success('Video updated successfully!');
       router.push('/admin-dashboard/videos');
     } catch (err) {
-      alert(err.message || 'Failed to update video');
+      toast.error(err.message || 'Failed to update video');
     } finally {
       setLoading(false);
     }
@@ -192,14 +194,7 @@ export default function EditVideo() {
   return (
     <div className="flex flex-col items-center px-4">
       <div className="w-full max-w-4xl">
-        <Link
-          href="/admin-dashboard/videos"
-          className="flex items-center gap-2 text-gray-400 hover:text-white mb-2"
-        >
-          <ArrowLeft size={20} />
-          Back to Videos
-        </Link>
-
+        <Breadcrumb items={[{ label: 'Videos', href: '/admin-dashboard/videos' }, { label: 'Edit Video' }]} />
         <h1 className="text-3xl font-bold text-white mb-4 text-center">Edit Video</h1>
 
         {/* Step Progress Indicator */}

@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminApi } from '@/lib/adminApi';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 export default function EditEpisode() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
@@ -107,7 +109,7 @@ export default function EditEpisode() {
         }
       }
     } catch (err) {
-      alert('Failed to fetch episode details');
+      toast.error('Failed to fetch episode details');
     } finally {
       setFetching(false);
     }
@@ -146,7 +148,7 @@ export default function EditEpisode() {
 
         video.onerror = function () {
           setCalculatingDuration(false);
-          alert('Could not read video metadata. Please enter duration manually.');
+          toast.warning('Could not read video metadata. Please enter duration manually.');
         };
 
         video.src = URL.createObjectURL(file);
@@ -174,7 +176,7 @@ export default function EditEpisode() {
       setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(prev => Math.min(prev + 1, steps.length));
     } else {
-      alert('Please fill in all required fields before proceeding.');
+      toast.warning('Please fill in all required fields before proceeding.');
     }
   };
 
@@ -190,7 +192,7 @@ export default function EditEpisode() {
 
   const handleFinalSubmit = async () => {
     if (!validateStep(4)) {
-      alert('Please complete all required fields before updating.');
+      toast.warning('Please complete all required fields before updating.');
       return;
     }
 
@@ -220,10 +222,10 @@ export default function EditEpisode() {
       }
 
       await adminApi.updateEpisodeWithFiles(params.id, formDataToSend);
-      alert('Episode updated successfully!');
+      toast.success('Episode updated successfully!');
       router.push('/admin-dashboard/episodes');
     } catch (err) {
-      alert(err.message || 'Failed to update episode');
+      toast.error(err.message || 'Failed to update episode');
     } finally {
       setLoading(false);
     }
@@ -240,14 +242,7 @@ export default function EditEpisode() {
   return (
     <div className="flex flex-col items-center px-4">
       <div className="w-full max-w-4xl">
-        <Link
-          href="/admin-dashboard/episodes"
-          className="flex items-center gap-2 text-gray-400 hover:text-white mb-2"
-        >
-          <ArrowLeft size={20} />
-          Back to Episodes
-        </Link>
-
+        <Breadcrumb items={[{ label: 'Episodes', href: '/admin-dashboard/episodes' }, { label: 'Edit Episode' }]} />
         <h1 className="text-3xl font-bold text-white mb-4 text-center">Edit Episode</h1>
 
         {/* Step Progress Indicator */}

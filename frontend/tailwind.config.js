@@ -6,7 +6,17 @@ module.exports = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        shrink: {
+          '0%':   { width: '100%' },
+          '100%': { width: '0%' },
+        },
+      },
+      animation: {
+        shrink: 'shrink linear forwards',
+      },
+    },
   },
   plugins: [],
 }

@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/adminApi';
-import { ArrowLeft, ArrowRight, Check, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 export default function AddVideo() {
   const router = useRouter();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -67,7 +69,7 @@ export default function AddVideo() {
 
         video.onerror = function () {
           setCalculatingDuration(false);
-          alert('Could not read video metadata. Please enter duration manually.');
+          toast.warning('Could not read video metadata. Please enter duration manually.');
         };
 
         video.src = URL.createObjectURL(file);
@@ -109,7 +111,7 @@ export default function AddVideo() {
       setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(prev => Math.min(prev + 1, steps.length));
     } else {
-      alert('Please fill in all required fields before proceeding.');
+      toast.warning('Please fill in all required fields before proceeding.');
     }
   };
 
@@ -125,26 +127,26 @@ export default function AddVideo() {
 
   const handleFinalSubmit = async () => {
     if (!validateStep(5)) {
-      alert('Please complete all required fields before submitting.');
+      toast.warning('Please complete all required fields.');
       return;
     }
 
     // Validation - only required for movies and not coming soon
     if (formData.content_type === 'MOVIE' && !formData.is_coming_soon) {
       if (formData.is_public_domain && !files.video_file) {
-        alert('Please select a video file for public domain content');
+        toast.warning('Please select a video file for public domain content');
         return;
       }
 
       if (!formData.is_public_domain && !formData.youtube_trailer_url) {
-        alert('Please enter a YouTube embed URL for non-public domain content');
+        toast.warning('Please enter a YouTube embed URL');
         return;
       }
     }
 
     // For coming soon, only thumbnail is required
     if (formData.is_coming_soon && !files.thumbnail) {
-      alert('Please upload a thumbnail for coming soon content');
+      toast.warning('Please upload a thumbnail');
       return;
     }
 
@@ -169,10 +171,10 @@ export default function AddVideo() {
       }
 
       await adminApi.createVideoWithFiles(formDataToSend);
-      alert('Video added successfully! It will be visible after SuperAdmin approval.');
+      toast.success('Video submitted for approval!');
       router.push('/admin-dashboard/videos');
     } catch (err) {
-      alert(err.message || 'Failed to add video');
+      toast.error(err.message || 'Failed to add video');
     } finally {
       setLoading(false);
     }
@@ -181,14 +183,7 @@ export default function AddVideo() {
   return (
     <div className="flex flex-col items-center px-4">
       <div className="w-full max-w-4xl">
-        <Link
-          href="/admin-dashboard/videos"
-          className="flex items-center gap-2 text-gray-400 hover:text-white mb-2"
-        >
-          <ArrowLeft size={20} />
-          Back to Videos
-        </Link>
-
+        <Breadcrumb items={[{ label: 'Videos', href: '/admin-dashboard/videos' }, { label: 'Add Video' }]} />
         <h1 className="text-3xl font-bold text-white mb-4 text-center">Add New Video</h1>
 
         {/* Step Progress Indicator */}
@@ -629,3 +624,4 @@ export default function AddVideo() {
     </div>
   );
 }
+

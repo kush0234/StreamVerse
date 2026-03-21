@@ -51,9 +51,9 @@ class VideoContentSerializer(serializers.ModelSerializer):
     trailer_url = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
-        many=True, 
-        queryset=Tag.objects.all(), 
-        write_only=True, 
+        many=True,
+        queryset=Tag.objects.all(),
+        write_only=True,
         required=False,
         source='tags'
     )
@@ -170,13 +170,12 @@ class MusicSerializer(serializers.ModelSerializer):
     duration_formatted = serializers.SerializerMethodField()
     in_watchlist = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
-    thumbnail = serializers.SerializerMethodField()
 
     class Meta:
         model = Music
         fields = [
             'id', 'title', 'artist', 'album', 'genre', 'release_date',
-            'thumbnail', 'audio_url', 'duration', 'duration_formatted',
+            'audio_url', 'duration', 'duration_formatted',
             'play_count', 'created_at', 'in_watchlist'
         ]
 
@@ -202,12 +201,6 @@ class MusicSerializer(serializers.ModelSerializer):
             return obj.audio_file.url
         return None
 
-    def get_thumbnail(self, obj):
-        if obj.thumbnail:
-            # CloudinaryField returns the full URL via .url property
-            return obj.thumbnail.url
-        return None
-
 
 class WatchlistSerializer(serializers.ModelSerializer):
     video = VideoContentMiniSerializer(read_only=True)
@@ -219,18 +212,10 @@ class WatchlistSerializer(serializers.ModelSerializer):
 
     def get_music(self, obj):
         if obj.music:
-            thumbnail_url = None
-            if obj.music.thumbnail:
-                try:
-                    thumbnail_url = obj.music.thumbnail.url
-                except:
-                    thumbnail_url = None
-            
             return {
                 "id": obj.music.id,
                 "title": obj.music.title,
                 "artist": obj.music.artist,
-                "thumbnail": thumbnail_url,
             }
         return None
 
@@ -242,7 +227,7 @@ class ContinueWatchingSerializer(serializers.Serializer):
     progress_percentage = serializers.FloatField()
     duration_watched = serializers.IntegerField()
     last_watched = serializers.DateTimeField()
-    
+
     def get_content(self, obj):
         content = obj['content']
         if obj['content_type'] == 'episode':
@@ -271,15 +256,15 @@ class RecommendationVideoSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
     episode_count = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = VideoContent
         fields = [
-            'id', 'title', 'description', 'genre', 'release_date', 
-            'rating', 'content_type', 'thumbnail', 'duration', 
+            'id', 'title', 'description', 'genre', 'release_date',
+            'rating', 'content_type', 'thumbnail', 'duration',
             'view_count', 'episode_count', 'tags'
         ]
-    
+
     def get_thumbnail(self, obj):
         if obj.thumbnail:
             try:
@@ -287,7 +272,7 @@ class RecommendationVideoSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
-    
+
     def get_episode_count(self, obj):
         if obj.content_type == "SERIES":
             return obj.episodes.count()
@@ -296,24 +281,15 @@ class RecommendationVideoSerializer(serializers.ModelSerializer):
 
 class RecommendationMusicSerializer(serializers.ModelSerializer):
     """Simplified music serializer for recommendations"""
-    thumbnail = serializers.SerializerMethodField()
     duration_formatted = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Music
         fields = [
             'id', 'title', 'artist', 'album', 'genre', 'release_date',
-            'thumbnail', 'duration', 'duration_formatted', 'play_count'
+            'duration', 'duration_formatted', 'play_count'
         ]
-    
-    def get_thumbnail(self, obj):
-        if obj.thumbnail:
-            try:
-                return obj.thumbnail.url
-            except:
-                return None
-        return None
-    
+
     def get_duration_formatted(self, obj):
         minutes = obj.duration // 60
         seconds = obj.duration % 60

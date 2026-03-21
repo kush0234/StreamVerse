@@ -33,10 +33,10 @@ class VideoContentAdmin(admin.ModelAdmin):
         "approval_status",
         "release_date",
     ]
-    
+
     # Make approval status editable in list view
     list_editable = ["approval_status"]
-    
+
     readonly_fields = ["view_count", "submitted_for_approval_at"]
     search_fields = ["title", "description"]
     ordering = ["-created_at"]
@@ -138,10 +138,10 @@ class VideoContentAdmin(admin.ModelAdmin):
         if obj and obj.content_type == "SERIES":
             return [EpisodeInline]
         return []
-    
+
     def save_model(self, request, obj, form, change):
         """Auto-generate tags when saving content and validate fields"""
-        
+
         # Validation logic
         if obj.is_public_domain:
             # For local uploads, clear YouTube URL
@@ -158,13 +158,13 @@ class VideoContentAdmin(admin.ModelAdmin):
             if not obj.is_coming_soon and not obj.youtube_trailer_url:
                 from django.contrib import messages
                 messages.warning(request, "⚠️ Non-public domain content should have a YouTube trailer URL.")
-        
+
         super().save_model(request, obj, form, change)
-        
+
         # Generate tags if none exist
         if not obj.tags.exists():
             AutoTagger.apply_tags_to_content(obj)
-    
+
     def generate_tags_action(self, request, queryset):
         """Admin action to generate tags for selected content"""
         count = 0
@@ -173,19 +173,19 @@ class VideoContentAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f"Generated tags for {count} content items")
     generate_tags_action.short_description = "Generate tags for selected content"
-    
+
     def approve_content(self, request, queryset):
         """Admin action to approve selected content"""
         updated = queryset.update(approval_status='APPROVED')
         self.message_user(request, f"✅ Approved {updated} content items", level='SUCCESS')
     approve_content.short_description = "✅ Approve selected content"
-    
+
     def reject_content(self, request, queryset):
         """Admin action to reject selected content"""
         updated = queryset.update(approval_status='REJECTED')
         self.message_user(request, f"❌ Rejected {updated} content items", level='WARNING')
     reject_content.short_description = "❌ Reject selected content"
-    
+
     def mark_as_coming_soon(self, request, queryset):
         """Admin action to mark content as coming soon"""
         updated = queryset.update(is_coming_soon=True)
@@ -242,8 +242,8 @@ class MusicAdmin(admin.ModelAdmin):
         (
             "Media Files",
             {
-                "fields": ("audio_file", "thumbnail"),
-                "description": "🎵 Upload audio file and album cover. Duration will be auto-calculated from audio file.",
+                "fields": ("audio_file",),
+                "description": "🎵 Upload audio file. A music symbol will be shown as the cover.",
             },
         ),
         ("Additional Info", {
@@ -278,19 +278,19 @@ from .models import UserInteraction, ContentSimilarity, MusicListenHistory
 @admin.register(UserInteraction)
 class UserInteractionAdmin(admin.ModelAdmin):
     list_display = [
-        "user", "profile", "interaction_type", "get_content", 
+        "user", "profile", "interaction_type", "get_content",
         "interaction_value", "duration", "created_at"
     ]
     list_filter = [
         "interaction_type", "created_at", "user", "profile"
     ]
     search_fields = [
-        "user__username", "profile__name", "video__title", 
+        "user__username", "profile__name", "video__title",
         "music__title", "episode__title"
     ]
     readonly_fields = ["created_at"]
     ordering = ["-created_at"]
-    
+
     def get_content(self, obj):
         if obj.video:
             return f"Video: {obj.video.title}"
@@ -300,7 +300,7 @@ class UserInteractionAdmin(admin.ModelAdmin):
             return f"Episode: {obj.episode.title}"
         return "No content"
     get_content.short_description = "Content"
-    
+
     fieldsets = (
         ("User Information", {
             "fields": ("user", "profile")
@@ -321,17 +321,17 @@ class UserInteractionAdmin(admin.ModelAdmin):
 @admin.register(ContentSimilarity)
 class ContentSimilarityAdmin(admin.ModelAdmin):
     list_display = [
-        "get_content_pair", "similarity_type", "similarity_score", 
+        "get_content_pair", "similarity_type", "similarity_score",
         "updated_at"
     ]
     list_filter = ["similarity_type", "updated_at"]
     search_fields = [
-        "video_a__title", "video_b__title", 
+        "video_a__title", "video_b__title",
         "music_a__title", "music_b__title"
     ]
     readonly_fields = ["created_at", "updated_at"]
     ordering = ["-similarity_score"]
-    
+
     def get_content_pair(self, obj):
         if obj.video_a and obj.video_b:
             return f"{obj.video_a.title} ↔ {obj.video_b.title}"
@@ -339,7 +339,7 @@ class ContentSimilarityAdmin(admin.ModelAdmin):
             return f"{obj.music_a.title} ↔ {obj.music_b.title}"
         return "Invalid pair"
     get_content_pair.short_description = "Content Pair"
-    
+
     fieldsets = (
         ("Video Similarity", {
             "fields": ("video_a", "video_b"),
@@ -362,17 +362,17 @@ class ContentSimilarityAdmin(admin.ModelAdmin):
 @admin.register(MusicListenHistory)
 class MusicListenHistoryAdmin(admin.ModelAdmin):
     list_display = [
-        "user", "profile", "music", "duration_listened", 
+        "user", "profile", "music", "duration_listened",
         "completed", "play_count", "updated_at"
     ]
     list_filter = ["completed", "updated_at", "user", "profile"]
     search_fields = [
-        "user__username", "profile__name", "music__title", 
+        "user__username", "profile__name", "music__title",
         "music__artist"
     ]
     readonly_fields = ["created_at", "updated_at"]
     ordering = ["-updated_at"]
-    
+
     fieldsets = (
         ("User Information", {
             "fields": ("user", "profile")

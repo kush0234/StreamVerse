@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { feedbackApi } from '@/lib/feedbackApi';
 import { ArrowLeft, Save, ThumbsUp, MessageSquare, Eye } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 export default function AdminFeedbackDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const feedbackId = params.id;
 
   const [feedback, setFeedback] = useState(null);
@@ -61,11 +64,11 @@ export default function AdminFeedbackDetailPage() {
 
     try {
       await feedbackApi.updateFeedback(feedbackId, formData);
-      alert('Feedback updated successfully');
+      toast.success('Feedback updated successfully');
       router.push('/admin-dashboard/feedback');
     } catch (err) {
       console.error('Failed to update feedback:', err);
-      alert('Failed to update feedback');
+      toast.error('Failed to update feedback');
     } finally {
       setSaving(false);
     }
@@ -112,13 +115,7 @@ export default function AdminFeedbackDetailPage() {
 
   return (
     <div className="p-6">
-      <button
-        onClick={() => router.push('/admin-dashboard/feedback')}
-        className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
-      >
-        <ArrowLeft size={20} />
-        Back to Feedback List
-      </button>
+      <Breadcrumb items={[{ label: 'Feedback', href: '/admin-dashboard/feedback' }, { label: feedback?.title || 'Detail' }]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Feedback Details (Left) */}

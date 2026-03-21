@@ -16,6 +16,9 @@ export default function AccountPage() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
   const [newProfileName, setNewProfileName] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [maturityLevel, setMaturityLevel] = useState('ADULT');
 
   // Change Password
   const [currentPassword, setCurrentPassword] = useState('');
@@ -29,6 +32,7 @@ export default function AccountPage() {
   // Subscription
   const [subscription, setSubscription] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
+  const [suggestedPlans, setSuggestedPlans] = useState([]);
 
   useEffect(() => {
     loadAccountData();
@@ -36,23 +40,25 @@ export default function AccountPage() {
 
   const loadAccountData = async () => {
     const token = localStorage.getItem('access_token');
-    
+
     if (!token) {
       router.push('/login');
       return;
     }
 
     try {
-      const [profilesData, userInfo, subscriptionData, paymentsData] = await Promise.all([
+      const [profilesData, userInfo, subscriptionData, paymentsData, plansData] = await Promise.all([
         api.getProfiles(token),
         api.getUserInfo(token),
         api.getUserSubscription(token).catch(() => null),
-        api.getPaymentHistory(token).catch(() => [])
+        api.getPaymentHistory(token).catch(() => []),
+        api.getSubscriptionPlans().catch(() => []),
       ]);
       setProfiles(profilesData);
       setUser(userInfo);
       setSubscription(subscriptionData);
       setPaymentHistory(paymentsData);
+      setSuggestedPlans(Array.isArray(plansData) ? plansData.slice(0, 3) : []);
     } catch (err) {
       console.error('Failed to load account data', err);
     } finally {
@@ -65,11 +71,18 @@ export default function AccountPage() {
       alert('Please enter a profile name');
       return;
     }
+    if (!profileImage) {
+      alert('Please select a profile image');
+      return;
+    }
 
     const token = localStorage.getItem('access_token');
     try {
-      await api.createProfile(token, newProfileName);
+      await api.createProfile(token, newProfileName, profileImage, maturityLevel);
       setNewProfileName('');
+      setProfileImage(null);
+      setImagePreview(null);
+      setMaturityLevel('ADULT');
       setShowAddProfile(false);
       loadAccountData();
     } catch (err) {
@@ -78,9 +91,20 @@ export default function AccountPage() {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleEditProfile = (profile) => {
     setEditingProfile(profile);
     setNewProfileName(profile.name);
+    setImagePreview(profile.profile_image_url || null);
+    setProfileImage(null);
+    setMaturityLevel(profile.maturity_level || 'ADULT');
     setShowEditProfile(true);
   };
 
@@ -92,8 +116,11 @@ export default function AccountPage() {
 
     const token = localStorage.getItem('access_token');
     try {
-      await api.updateProfile(token, editingProfile.id, newProfileName);
+      await api.updateProfile(token, editingProfile.id, newProfileName, profileImage, maturityLevel);
       setNewProfileName('');
+      setProfileImage(null);
+      setImagePreview(null);
+      setMaturityLevel('ADULT');
       setShowEditProfile(false);
       setEditingProfile(null);
       loadAccountData();
@@ -114,7 +141,7 @@ export default function AccountPage() {
       try {
         await api.deleteProfile(token, profile.id);
         loadAccountData();
-        
+
         // If deleted profile was selected, clear it
         const selectedProfile = localStorage.getItem('selected_profile');
         if (selectedProfile) {
@@ -132,7 +159,7 @@ export default function AccountPage() {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       alert('Passwords do not match');
       return;
@@ -203,7 +230,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
-      
+
       <div className="pt-20 px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -219,11 +246,10 @@ export default function AccountPage() {
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition flex items-center gap-3 ${
-                    activeSection === section.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition flex items-center gap-3 ${activeSection === section.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                    }`}
                 >
                   <span className="text-xl">{section.icon}</span>
                   <span className="font-medium">{section.name}</span>
@@ -235,12 +261,12 @@ export default function AccountPage() {
           {/* Main Content */}
           <div className="flex-1">
             <div className="bg-gray-900/30 rounded-xl p-8">
-              
+
               {/* Profile Management */}
               {activeSection === 'profile' && (
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Profile Management</h2>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">
                     {profiles.map((profile) => (
                       <div
@@ -254,12 +280,24 @@ export default function AccountPage() {
                             router.push('/browse');
                           }}
                         >
-                          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center text-3xl font-bold">
-                            {profile.name.charAt(0).toUpperCase()}
+                          <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-transparent group-hover:border-blue-500 transition">
+                            {profile.profile_image_url ? (
+                              <img src={profile.profile_image_url} alt={profile.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold">
+                                {profile.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                           </div>
                           <h3 className="font-semibold mb-1">{profile.name}</h3>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${profile.maturity_level === 'KIDS'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-gray-700 text-gray-400'
+                            }`}>
+                            {profile.maturity_level === 'KIDS' ? '🧒 Kids' : '🎬 Adult'}
+                          </span>
                         </div>
-                        
+
                         {/* Edit/Delete buttons */}
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                           <button
@@ -289,9 +327,9 @@ export default function AccountPage() {
                         </div>
                       </div>
                     ))}
-                    
+
                     {/* Add Profile Button */}
-                    {profiles.length < 5 && (
+                    {profiles.length < (user?.max_profiles ?? 2) && (
                       <button
                         onClick={() => setShowAddProfile(true)}
                         className="bg-gray-800/30 border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-gray-800/50 transition"
@@ -311,7 +349,7 @@ export default function AccountPage() {
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                       <div className="bg-gray-900 rounded-xl p-8 max-w-md w-full">
                         <h3 className="text-2xl font-bold mb-6">Add New Profile</h3>
-                        
+
                         <div className="mb-4">
                           <label className="block text-sm font-medium mb-2">Profile Name</label>
                           <input
@@ -321,6 +359,56 @@ export default function AccountPage() {
                             className="w-full px-4 py-3 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter profile name"
                           />
+                        </div>
+
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium mb-2">Profile Image</label>
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex items-center justify-center flex-shrink-0">
+                              {imagePreview ? (
+                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                              ) : (
+                                <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              )}
+                            </div>
+                            <label className="flex-1 cursor-pointer">
+                              <div className="w-full px-4 py-3 bg-gray-800 text-gray-400 rounded-lg border-2 border-dashed border-gray-700 hover:border-blue-500 hover:text-white transition text-center text-sm">
+                                {profileImage ? profileImage.name : 'Click to upload image'}
+                              </div>
+                              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium mb-3">Maturity Level</label>
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setMaturityLevel('ADULT')}
+                              className={`flex-1 py-3 rounded-lg font-semibold transition-all ${maturityLevel === 'ADULT'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                                }`}
+                            >
+                              🎬 Adult
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMaturityLevel('KIDS')}
+                              className={`flex-1 py-3 rounded-lg font-semibold transition-all ${maturityLevel === 'KIDS'
+                                ? 'bg-yellow-500 text-black'
+                                : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                                }`}
+                            >
+                              🧒 Kids
+                            </button>
+                          </div>
+                          {maturityLevel === 'KIDS' && (
+                            <p className="text-xs text-yellow-400 mt-2">Kids profiles only show age-appropriate content.</p>
+                          )}
                         </div>
 
                         <div className="flex gap-3">
@@ -334,6 +422,9 @@ export default function AccountPage() {
                             onClick={() => {
                               setShowAddProfile(false);
                               setNewProfileName('');
+                              setProfileImage(null);
+                              setImagePreview(null);
+                              setMaturityLevel('ADULT');
                             }}
                             className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-lg font-semibold transition"
                           >
@@ -349,7 +440,7 @@ export default function AccountPage() {
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                       <div className="bg-gray-900 rounded-xl p-8 max-w-md w-full">
                         <h3 className="text-2xl font-bold mb-6">Edit Profile</h3>
-                        
+
                         <div className="mb-4">
                           <label className="block text-sm font-medium mb-2">Profile Name</label>
                           <input
@@ -359,6 +450,56 @@ export default function AccountPage() {
                             className="w-full px-4 py-3 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter profile name"
                           />
+                        </div>
+
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium mb-2">Profile Image</label>
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex items-center justify-center flex-shrink-0">
+                              {imagePreview ? (
+                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                              ) : (
+                                <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              )}
+                            </div>
+                            <label className="flex-1 cursor-pointer">
+                              <div className="w-full px-4 py-3 bg-gray-800 text-gray-400 rounded-lg border-2 border-dashed border-gray-700 hover:border-blue-500 hover:text-white transition text-center text-sm">
+                                {profileImage ? profileImage.name : 'Click to change image (optional)'}
+                              </div>
+                              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium mb-3">Maturity Level</label>
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setMaturityLevel('ADULT')}
+                              className={`flex-1 py-3 rounded-lg font-semibold transition-all ${maturityLevel === 'ADULT'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                                }`}
+                            >
+                              🎬 Adult
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMaturityLevel('KIDS')}
+                              className={`flex-1 py-3 rounded-lg font-semibold transition-all ${maturityLevel === 'KIDS'
+                                ? 'bg-yellow-500 text-black'
+                                : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                                }`}
+                            >
+                              🧒 Kids
+                            </button>
+                          </div>
+                          {maturityLevel === 'KIDS' && (
+                            <p className="text-xs text-yellow-400 mt-2">Kids profiles only show age-appropriate content.</p>
+                          )}
                         </div>
 
                         <div className="flex gap-3">
@@ -373,6 +514,9 @@ export default function AccountPage() {
                               setShowEditProfile(false);
                               setEditingProfile(null);
                               setNewProfileName('');
+                              setProfileImage(null);
+                              setImagePreview(null);
+                              setMaturityLevel('ADULT');
                             }}
                             className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-lg font-semibold transition"
                           >
@@ -385,9 +529,56 @@ export default function AccountPage() {
 
                   <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4 mt-6">
                     <p className="text-sm text-blue-300">
-                      💡 You can create up to 5 profiles per account. Each profile has its own watchlist and preferences.
+                      💡 Your current plan allows up to <span className="font-semibold text-white">{user?.max_profiles ?? 2}</span> profile{(user?.max_profiles ?? 2) !== 1 ? 's' : ''}.
+                      {profiles.length >= (user?.max_profiles ?? 2) && (
+                        <> <button onClick={() => router.push('/plans')} className="underline text-yellow-400 hover:text-yellow-300 ml-1">Upgrade your plan</button> to add more.</>
+                      )}
                     </p>
                   </div>
+
+                  {/* Upgrade Banner — shown when at limit with no subscription */}
+                  {profiles.length >= (user?.max_profiles ?? 2) && !subscription && suggestedPlans.length > 0 && (
+                    <div className="mt-8">
+                      <div className="text-center mb-5">
+                        <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Free plan limit reached</p>
+                        <h3 className="text-xl font-bold">Unlock more profiles with a plan</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {suggestedPlans.map((plan) => {
+                          const isPopular = plan.name === 'STANDARD';
+                          return (
+                            <div
+                              key={plan.id}
+                              onClick={() => router.push('/plans')}
+                              className={`relative rounded-xl p-5 border-2 cursor-pointer transition-all hover:scale-105 ${isPopular
+                                  ? 'border-blue-500 bg-blue-900/20 shadow-lg shadow-blue-500/20'
+                                  : 'border-gray-700 bg-gray-800/30 hover:border-gray-500'
+                                }`}
+                            >
+                              {isPopular && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                                  <span className="bg-blue-600 text-xs font-bold px-3 py-1 rounded-full">Most Popular</span>
+                                </div>
+                              )}
+                              <h4 className="font-bold text-base mb-1">{plan.display_name}</h4>
+                              <p className="text-xl font-bold mb-1">₹{plan.monthly_price}<span className="text-xs text-gray-400">/mo</span></p>
+                              <ul className="text-xs text-gray-400 space-y-1 mt-3">
+                                <li>✓ {plan.max_profiles} profiles</li>
+                                <li>✓ {plan.video_quality} quality</li>
+                                <li>✓ {plan.max_simultaneous_streams} stream{plan.max_simultaneous_streams > 1 ? 's' : ''}</li>
+                                {!plan.has_ads && <li>✓ Ad-free</li>}
+                                {plan.can_download && <li>✓ Downloads</li>}
+                              </ul>
+                              <button className={`w-full mt-4 py-2 rounded-lg text-sm font-semibold transition ${isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'
+                                }`}>
+                                Choose {plan.display_name}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -395,7 +586,7 @@ export default function AccountPage() {
               {activeSection === 'account' && (
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Account Information</h2>
-                  
+
                   <div className="space-y-6">
                     <div className="bg-gray-800/50 rounded-lg p-6">
                       <label className="block text-sm text-gray-400 mb-2">Username</label>
@@ -414,7 +605,7 @@ export default function AccountPage() {
 
                     <div className="bg-gray-800/50 rounded-lg p-6">
                       <label className="block text-sm text-gray-400 mb-2">Total Profiles</label>
-                      <p className="text-xl font-semibold">{user?.profile_count || profiles.length} / 5</p>
+                      <p className="text-xl font-semibold">{user?.profile_count || profiles.length} / {user?.max_profiles ?? 2}</p>
                     </div>
                   </div>
                 </div>
@@ -424,7 +615,7 @@ export default function AccountPage() {
               {activeSection === 'security' && (
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Privacy & Security</h2>
-                  
+
                   {/* Change Password */}
                   <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
                     <h3 className="text-xl font-semibold mb-4">Change Password</h3>
@@ -504,7 +695,7 @@ export default function AccountPage() {
                     >
                       Sign Out of All Devices
                     </button>
-                    
+
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
                       className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/50 py-3 rounded-lg font-semibold transition"
@@ -570,7 +761,7 @@ export default function AccountPage() {
               {activeSection === 'billing' && (
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Subscription & Billing</h2>
-                  
+
                   {subscription ? (
                     <>
                       {/* Current Plan */}
@@ -589,12 +780,11 @@ export default function AccountPage() {
                               </p>
                             )}
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            subscription.status === 'ACTIVE' ? 'bg-green-500/20 text-green-300' :
+                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${subscription.status === 'ACTIVE' ? 'bg-green-500/20 text-green-300' :
                             subscription.status === 'TRIAL' ? 'bg-blue-500/20 text-blue-300' :
-                            subscription.status === 'CANCELLED' ? 'bg-red-500/20 text-red-300' :
-                            'bg-gray-500/20 text-gray-300'
-                          }`}>
+                              subscription.status === 'CANCELLED' ? 'bg-red-500/20 text-red-300' :
+                                'bg-gray-500/20 text-gray-300'
+                            }`}>
                             {subscription.status}
                           </span>
                         </div>
@@ -689,12 +879,11 @@ export default function AccountPage() {
                                 </div>
                                 <div className="text-right">
                                   <p className="font-semibold">₹{payment.amount}</p>
-                                  <span className={`text-xs px-2 py-1 rounded ${
-                                    payment.payment_status === 'SUCCESS' ? 'bg-green-600/20 text-green-400' :
+                                  <span className={`text-xs px-2 py-1 rounded ${payment.payment_status === 'SUCCESS' ? 'bg-green-600/20 text-green-400' :
                                     payment.payment_status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
-                                    payment.payment_status === 'FAILED' ? 'bg-red-600/20 text-red-400' :
-                                    'bg-gray-600/20 text-gray-400'
-                                  }`}>
+                                      payment.payment_status === 'FAILED' ? 'bg-red-600/20 text-red-400' :
+                                        'bg-gray-600/20 text-gray-400'
+                                    }`}>
                                     {payment.payment_status}
                                   </span>
                                 </div>
@@ -726,7 +915,7 @@ export default function AccountPage() {
               {activeSection === 'help' && (
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Help & Support</h2>
-                  
+
                   {/* Quick Links */}
                   <div className="grid md:grid-cols-2 gap-4 mb-8">
                     {[
@@ -761,6 +950,6 @@ export default function AccountPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

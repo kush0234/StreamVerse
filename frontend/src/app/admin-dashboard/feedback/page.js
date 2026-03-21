@@ -1,9 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { feedbackApi } from '@/lib/feedbackApi';
-import { Eye, MessageSquare, ThumbsUp, Edit, Pin, PinOff, Trash2, Search } from 'lucide-react';
+import { Eye, MessageSquare, ThumbsUp, Edit, Pin, PinOff, Trash2, MessageCircle } from 'lucide-react';
+import LoadingSpinner from '@/components/admin/LoadingSpinner';
+import EmptyState from '@/components/admin/EmptyState';
+import SearchBar from '@/components/admin/SearchBar';
+import ConfirmModal from '@/components/admin/ConfirmModal';
+import { useToast } from '@/context/ToastContext';
+
+const STATUS_COLORS = {
+  SUBMITTED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  UNDER_REVIEW: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  IN_PROGRESS: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  COMPLETED: 'bg-green-500/20 text-green-400 border-green-500/30',
+  CLOSED: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  REJECTED: 'bg-red-500/20 text-red-400 border-red-500/30',
+};
+
+const STAT_CARDS = [
+  { key: 'total', label: 'Total', cls: 'bg-gray-800 border-gray-700', textCls: 'text-white' },
+  { key: 'SUBMITTED', label: 'Submitted', cls: 'bg-blue-500/10 border-blue-500/30', textCls: 'text-blue-400' },
+  { key: 'UNDER_REVIEW', label: 'Under Review', cls: 'bg-yellow-500/10 border-yellow-500/30', textCls: 'text-yellow-400' },
+  { key: 'IN_PROGRESS', label: 'In Progress', cls: 'bg-purple-500/10 border-purple-500/30', textCls: 'text-purple-400' },
+  { key: 'COMPLETED', label: 'Completed', cls: 'bg-green-500/10 border-green-500/30', textCls: 'text-green-400' },
+  { key: 'REJECTED', label: 'Rejected', cls: 'bg-red-500/10 border-red-500/30', textCls: 'text-red-400' },
+];
 
 export default function AdminFeedbackPage() {
   const router = useRouter();
@@ -14,27 +37,16 @@ export default function AdminFeedbackPage() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const toast = useToast();
 
-  useEffect(() => {
-    // Check authentication
-    const token = localStorage.getItem('access_token');
-    const role = localStorage.getItem('role');
-    if (!token || role !== 'ADMIN') {
-      router.push('/login');
-      return;
-    }
-    loadData();
-  }, [selectedCategory, selectedStatus, searchQuery, router]);
+  useEffect(() => { loadData(); }, [selectedCategory, selectedStatus]);
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const [feedbackData, categoriesData, statsData] = await Promise.all([
-        feedbackApi.getAllFeedback({
-          category: selectedCategory,
-          status: selectedStatus,
-          search: searchQuery,
-        }),
+        feedbackApi.getAllFeedback({ category: selectedCategory, status: selectedStatus }),
         feedbackApi.getCategories(),
         feedbackApi.getStats(),
       ]);
@@ -43,10 +55,6 @@ export default function AdminFeedbackPage() {
       setStats(statsData);
     } catch (err) {
       console.error('Failed to load data:', err);
-      // If authentication error, redirect to login
-      if (err.message.includes('token') || err.message.includes('auth')) {
-        router.push('/login');
-      }
     } finally {
       setLoading(false);
     }
@@ -55,221 +63,147 @@ export default function AdminFeedbackPage() {
   const handleTogglePin = async (feedbackId, currentPinned) => {
     try {
       await feedbackApi.updateFeedback(feedbackId, { is_pinned: !currentPinned });
+      toast.success(currentPinned ? 'Feedback unpinned' : 'Feedback pinned');
       loadData();
-    } catch (err) {
-      console.error('Failed to toggle pin:', err);
-      alert('Failed to update feedback');
+    } catch {
+      toast.error('Failed to update feedback');
     }
   };
 
-  const handleDelete = async (feedbackId) => {
-    if (!confirm('Are you sure you want to delete this feedback?')) return;
-
+  const handleDelete = async () => {
     try {
-      await feedbackApi.deleteFeedback(feedbackId);
+      await feedbackApi.deleteFeedback(deleteTarget);
+      setDeleteTarget(null);
+      toast.success('Feedback deleted');
       loadData();
-    } catch (err) {
-      console.error('Failed to delete feedback:', err);
-      alert('Failed to delete feedback');
+    } catch {
+      toast.error('Failed to delete feedback');
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      SUBMITTED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      UNDER_REVIEW: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      IN_PROGRESS: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-      COMPLETED: 'bg-green-500/20 text-green-400 border-green-500/30',
-      CLOSED: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-      REJECTED: 'bg-red-500/20 text-red-400 border-red-500/30',
-    };
-    return colors[status] || colors.SUBMITTED;
-  };
+  const filtered = useMemo(() =>
+    feedbacks.filter((f) =>
+      f.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.username?.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [feedbacks, searchQuery]);
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Feedback Management</h1>
-        <p className="text-gray-400">Manage user feedback and suggestions</p>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Feedback Management</h1>
+        <p className="text-gray-400 text-sm mt-0.5">Manage user feedback and suggestions</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-            <p className="text-gray-400 text-sm mb-1">Total</p>
-            <p className="text-2xl font-bold text-white">{stats.total_feedback}</p>
-          </div>
-          <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
-            <p className="text-blue-400 text-sm mb-1">Submitted</p>
-            <p className="text-2xl font-bold text-white">{stats.by_status.SUBMITTED || 0}</p>
-          </div>
-          <div className="bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/30">
-            <p className="text-yellow-400 text-sm mb-1">Under Review</p>
-            <p className="text-2xl font-bold text-white">{stats.by_status.UNDER_REVIEW || 0}</p>
-          </div>
-          <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/30">
-            <p className="text-purple-400 text-sm mb-1">In Progress</p>
-            <p className="text-2xl font-bold text-white">{stats.by_status.IN_PROGRESS || 0}</p>
-          </div>
-          <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/30">
-            <p className="text-green-400 text-sm mb-1">Completed</p>
-            <p className="text-2xl font-bold text-white">{stats.by_status.COMPLETED || 0}</p>
-          </div>
-          <div className="bg-red-500/10 rounded-lg p-4 border border-red-500/30">
-            <p className="text-red-400 text-sm mb-1">Rejected</p>
-            <p className="text-2xl font-bold text-white">{stats.by_status.REJECTED || 0}</p>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {STAT_CARDS.map(({ key, label, cls, textCls }) => (
+            <div key={key} className={`rounded-xl p-4 border ${cls}`}>
+              <p className={`text-xs mb-1 ${textCls}`}>{label}</p>
+              <p className="text-2xl font-bold text-white">
+                {key === 'total' ? stats.total_feedback : (stats.by_status?.[key] || 0)}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search feedback..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
-          </div>
-
+      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search feedback..." />
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Categories</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.slug}>
-                {cat.icon} {cat.name}
-              </option>
+              <option key={cat.id} value={cat.slug}>{cat.icon} {cat.name}</option>
             ))}
           </select>
-
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Status</option>
-            <option value="SUBMITTED">Submitted</option>
-            <option value="UNDER_REVIEW">Under Review</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CLOSED">Closed</option>
-            <option value="REJECTED">Rejected</option>
+            {Object.keys(STATUS_COLORS).map((s) => (
+              <option key={s} value={s}>{s.replace('_', ' ')}</option>
+            ))}
           </select>
         </div>
       </div>
 
-      {/* Feedback List */}
+      {/* Table */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-          <p className="text-gray-400 mt-4">Loading feedback...</p>
-        </div>
-      ) : feedbacks.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
-          <p className="text-gray-400 text-lg">No feedback found</p>
-        </div>
+        <LoadingSpinner message="Loading feedback..." />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={MessageCircle} message="No feedback found" />
       ) : (
-        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-900 text-gray-400 uppercase text-xs tracking-wider">
                 <tr>
-                  <th className="px-4 py-3 text-left text-white">Sr No</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Feedback
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Stats
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  {['#', 'Feedback', 'Category', 'Status', 'Stats', 'Date', 'Actions'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left whitespace-nowrap">{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {feedbacks.map((feedback, index) => (
-                  <tr key={feedback.id} className="hover:bg-gray-700/50 transition-colors">
-                    <td className="px-4 py-4 text-gray-300">{index + 1}</td>
-
-                    <td className="px-4 py-4">
-                      <div className="flex items-start gap-2">
-                        {feedback.is_pinned && (
-                          <span className="text-yellow-400 flex-shrink-0 mt-1">📌</span>
-                        )}
-                        <div>
-                          <p className="text-white font-medium">{feedback.title}</p>
-                          <p className="text-sm text-gray-400">by {feedback.username}</p>
+                {filtered.map((feedback, index) => (
+                  <tr key={feedback.id} className="hover:bg-gray-700/40 transition-colors">
+                    <td className="px-4 py-3 text-gray-500">{index + 1}</td>
+                    <td className="px-4 py-3 max-w-[220px]">
+                      <div className="flex items-start gap-1.5">
+                        {feedback.is_pinned && <span className="text-yellow-400 flex-shrink-0 mt-0.5">📌</span>}
+                        <div className="min-w-0">
+                          <p className="text-white font-medium truncate">{feedback.title}</p>
+                          <p className="text-xs text-gray-500">by {feedback.username}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm">
-                        {feedback.category_icon} {feedback.category_name}
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {feedback.category_icon} {feedback.category_name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded border ${STATUS_COLORS[feedback.status] || STATUS_COLORS.SUBMITTED}`}>
+                        {feedback.status?.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(feedback.status)}`}>
-                        {feedback.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3 text-sm text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <ThumbsUp size={14} />
-                          {feedback.vote_score}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare size={14} />
-                          {feedback.comments_count}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} />
-                          {feedback.views_count}
-                        </span>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3 text-xs text-gray-400">
+                        <span className="flex items-center gap-1"><ThumbsUp size={12} />{feedback.vote_score}</span>
+                        <span className="flex items-center gap-1"><MessageSquare size={12} />{feedback.comments_count}</span>
+                        <span className="flex items-center gap-1"><Eye size={12} />{feedback.views_count}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-400">
+                    <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                       {new Date(feedback.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => router.push(`/admin-dashboard/feedback/${feedback.id}`)}
-                          className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
+                          className="p-1.5 text-blue-400 hover:bg-blue-500/20 rounded transition-colors"
                           title="View/Edit"
                         >
-                          <Edit size={18} />
+                          <Edit size={15} />
                         </button>
                         <button
                           onClick={() => handleTogglePin(feedback.id, feedback.is_pinned)}
-                          className="p-2 text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-colors"
+                          className="p-1.5 text-yellow-400 hover:bg-yellow-500/20 rounded transition-colors"
                           title={feedback.is_pinned ? 'Unpin' : 'Pin'}
                         >
-                          {feedback.is_pinned ? <PinOff size={18} /> : <Pin size={18} />}
+                          {feedback.is_pinned ? <PinOff size={15} /> : <Pin size={15} />}
                         </button>
                         <button
-                          onClick={() => handleDelete(feedback.id)}
-                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                          onClick={() => setDeleteTarget(feedback.id)}
+                          className="p-1.5 text-red-400 hover:bg-red-500/20 rounded transition-colors"
                           title="Delete"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -278,8 +212,19 @@ export default function AdminFeedbackPage() {
               </tbody>
             </table>
           </div>
+          <div className="px-4 py-2 border-t border-gray-700 text-xs text-gray-500">
+            Showing {filtered.length} of {feedbacks.length} feedback items
+          </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete Feedback"
+        message="This will permanently delete the feedback and all its comments. This action cannot be undone."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

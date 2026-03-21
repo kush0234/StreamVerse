@@ -57,10 +57,10 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     def save(self):
         email = self.validated_data['email']
         user = User.objects.get(email=email)
-        
+
         # Create reset token
         reset_token = PasswordResetToken.objects.create(user=user)
-        
+
         # Send email
         reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token.token}"
         subject = "StreamVerse - Password Reset Request"
@@ -79,7 +79,7 @@ If you didn't request this, please ignore this email.
 Best regards,
 StreamVerse Team
         """
-        
+
         send_mail(
             subject,
             message,
@@ -87,7 +87,7 @@ StreamVerse Team
             [user.email],
             fail_silently=False,
         )
-        
+
         return reset_token
 
 
@@ -109,18 +109,18 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     def save(self):
         token = self.validated_data['token']
         new_password = self.validated_data['new_password']
-        
+
         reset_token = PasswordResetToken.objects.get(token=token)
         user = reset_token.user
-        
+
         # Update password
         user.set_password(new_password)
         user.save()
-        
+
         # Mark token as used
         reset_token.is_used = True
         reset_token.save()
-        
+
         return user
 
 
@@ -145,15 +145,25 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    profile_image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Profile
-        fields = ["id", "name", "profile_image", "age_restriction", "created_at"]
-        read_only_fields = ["id", "created_at"]
-    
+        fields = ["id", "name", "profile_image", "profile_image_url", "maturity_level", "created_at"]
+        read_only_fields = ["id", "created_at", "profile_image_url"]
+
+    def get_profile_image_url(self, obj):
+        if obj.profile_image:
+            try:
+                return obj.profile_image.url
+            except:
+                return None
+        return None
+
     def validate_name(self, value):
         """Ensure profile name is unique for the user"""
         user = self.context['request'].user
-        
+
         # Check if updating existing profile
         if self.instance:
             existing_profiles = Profile.objects.filter(
@@ -163,16 +173,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             existing_profiles = Profile.objects.filter(
                 user=user, name__iexact=value
             )
-        
+
         if existing_profiles.exists():
             raise serializers.ValidationError("You already have a profile with this name.")
-        
+
         return value
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     savings = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = SubscriptionPlan
         fields = [
@@ -181,7 +191,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'max_profiles', 'max_simultaneous_streams', 'video_quality',
             'has_ads', 'can_download', 'priority_support', 'is_active'
         ]
-    
+
     def get_savings(self, obj):
         """Calculate yearly savings"""
         monthly_cost = float(obj.monthly_price) * 12
@@ -194,7 +204,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     is_active_status = serializers.BooleanField(source='is_active', read_only=True)
     is_trial_status = serializers.BooleanField(source='is_trial', read_only=True)
     days_left = serializers.IntegerField(source='days_remaining', read_only=True)
-    
+
     class Meta:
         model = Subscription
         fields = [
@@ -214,7 +224,7 @@ class CreateSubscriptionSerializer(serializers.Serializer):
         choices=['CARD', 'UPI', 'NETBANKING', 'WALLET'],
         required=True
     )
-    
+
     def validate_plan_id(self, value):
         try:
             plan = SubscriptionPlan.objects.get(id=value, is_active=True)
@@ -225,7 +235,7 @@ class CreateSubscriptionSerializer(serializers.Serializer):
 
 class PaymentHistorySerializer(serializers.ModelSerializer):
     subscription_plan = serializers.CharField(source='subscription.plan.display_name', read_only=True)
-    
+
     class Meta:
         model = PaymentHistory
         fields = [
@@ -238,20 +248,26 @@ class PaymentHistorySerializer(serializers.ModelSerializer):
 
 class UserInfoSerializer(serializers.ModelSerializer):
     profile_count = serializers.SerializerMethodField()
+    max_profiles = serializers.SerializerMethodField()
     member_since = serializers.SerializerMethodField()
     subscription_info = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "date_joined", "member_since", "profile_count", "subscription_info"]
+        fields = ["id", "username", "email", "date_joined", "member_since", "profile_count", "max_profiles", "subscription_info"]
         read_only_fields = ["id", "username", "email", "date_joined"]
 
     def get_profile_count(self, obj):
         return obj.profiles.count()
 
+    def get_max_profiles(self, obj):
+        if obj.is_subscribed and obj.subscription_plan:
+            return obj.subscription_plan.max_profiles
+        return 2  # Default for unsubscribed users
+
     def get_member_since(self, obj):
         return obj.date_joined.strftime("%B %Y")
-    
+
     def get_subscription_info(self, obj):
         if hasattr(obj, 'user_subscription') and obj.user_subscription:
             return SubscriptionSerializer(obj.user_subscription).data
@@ -262,7 +278,7 @@ class InitiatePaymentSerializer(serializers.Serializer):
     """Serializer for initiating payment"""
     plan_id = serializers.IntegerField(required=True)
     billing_cycle = serializers.ChoiceField(choices=['MONTHLY', 'YEARLY'], required=True)
-    
+
     def validate_plan_id(self, value):
         try:
             plan = SubscriptionPlan.objects.get(id=value, is_active=True)
