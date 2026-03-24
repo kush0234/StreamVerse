@@ -146,7 +146,7 @@ export default function MusicPage() {
 
   const getFilteredArtists = () => {
     let filteredArtists = [...artists];
-    
+
     if (searchQuery) {
       filteredArtists = filteredArtists.filter(artist =>
         artist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -165,7 +165,7 @@ export default function MusicPage() {
 
   const getFilteredAlbums = () => {
     let filteredAlbums = [...albums];
-    
+
     if (searchQuery) {
       filteredAlbums = filteredAlbums.filter(album =>
         album.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -336,11 +336,11 @@ export default function MusicPage() {
   );
   const renderArtists = () => {
     const filteredArtists = getFilteredArtists();
-    
+
     return (
       <div className="space-y-6">
         <p className="text-gray-400">{filteredArtists.length} Artists</p>
-        
+
         {filteredArtists.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {filteredArtists.map((artist) => (
@@ -369,11 +369,11 @@ export default function MusicPage() {
                     </svg>
                   </div>
                 </div>
-                
+
                 <h3 className="font-semibold text-white truncate mb-2 group-hover:text-purple-400 transition text-center">
                   {artist.name}
                 </h3>
-                
+
                 <div className="text-center space-y-1">
                   <p className="text-sm text-gray-400">{artist.track_count} tracks</p>
                   <p className="text-sm text-gray-400">{artist.total_plays} plays</p>
@@ -411,11 +411,11 @@ export default function MusicPage() {
   };
   const renderAlbums = () => {
     const filteredAlbums = getFilteredAlbums();
-    
+
     return (
       <div className="space-y-6">
         <p className="text-gray-400">{filteredAlbums.length} Albums</p>
-        
+
         {filteredAlbums.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {filteredAlbums.map((album) => (
@@ -444,12 +444,12 @@ export default function MusicPage() {
                     </svg>
                   </div>
                 </div>
-                
+
                 <h3 className="font-semibold text-white truncate mb-1 group-hover:text-purple-400 transition">
                   {album.title}
                 </h3>
                 <p className="text-sm text-gray-400 truncate mb-2">{album.artist}</p>
-                
+
                 <div className="space-y-1">
                   <p className="text-sm text-gray-400">{album.track_count} tracks</p>
                   <p className="text-sm text-gray-400">{album.total_duration_formatted}</p>
@@ -463,14 +463,14 @@ export default function MusicPage() {
             <div className="inline-block p-8 bg-gray-900 rounded-full mb-6">
               <svg className="w-20 h-20 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-            </svg>
+              </svg>
+            </div>
+            <p className="text-gray-400 text-xl">No albums found</p>
+            <p className="text-gray-500 mt-2">Try adjusting your search query</p>
           </div>
-          <p className="text-gray-400 text-xl">No albums found</p>
-          <p className="text-gray-500 mt-2">Try adjusting your search query</p>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
   };
   return (
     <div className="min-h-screen bg-black text-white">

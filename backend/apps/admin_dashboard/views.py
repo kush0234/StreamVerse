@@ -23,27 +23,27 @@ from .serializers import (
 class DashboardViewSet(viewsets.ViewSet):
     """Admin dashboard overview"""
     permission_classes = [IsAdminUser]
-    
+
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Get dashboard overview statistics"""
-        
+
         # Calculate stats
         total_users = User.objects.count()
         total_videos = VideoContent.objects.count()
         total_episodes = Episode.objects.count()
         total_music = Music.objects.count()
-        
+
         data = {
             'total_users': total_users,
             'total_videos': total_videos,
             'total_episodes': total_episodes,
             'total_music': total_music,
         }
-        
+
         serializer = DashboardStatsSerializer(data)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def recent_activities(self, request):
         """Get recent activities"""
@@ -59,15 +59,15 @@ class VideoManagementViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     queryset = VideoContent.objects.all().order_by('-created_at')
     serializer_class = VideoManagementSerializer
-    
+
     def perform_create(self, serializer):
         # Set approval status to PENDING for admin-created content
         video = serializer.save(approval_status='PENDING')
-        
+
         # Auto-generate tags
         from apps.content.utils.auto_tagger import AutoTagger
         AutoTagger.apply_tags_to_content(video)
-        
+
         # Log activity
         ActivityLog.log_activity(
             activity_type='VIDEO_UPLOADED',
@@ -76,7 +76,7 @@ class VideoManagementViewSet(viewsets.ModelViewSet):
             metadata={'video_id': video.id, 'content_type': video.content_type, 'approval_status': 'PENDING'},
             request=self.request
         )
-    
+
     def perform_destroy(self, instance):
         # Log activity before deletion
         ActivityLog.log_activity(
@@ -87,7 +87,7 @@ class VideoManagementViewSet(viewsets.ModelViewSet):
             request=self.request
         )
         instance.delete()
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         content_type = self.request.query_params.get('content_type', None)
@@ -102,23 +102,24 @@ class EpisodeManagementViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     queryset = Episode.objects.all().select_related('series')
     serializer_class = EpisodeManagementSerializer
-    
+
     def perform_create(self, serializer):
-        episode = serializer.save()
+        episode = serializer.save(approval_status='PENDING')
         # Log activity
         ActivityLog.log_activity(
             activity_type='EPISODE_ADDED',
             user=self.request.user,
-            description=f'New episode "{episode.title}" added to series "{episode.series.title}"',
+            description=f'New episode "{episode.title}" added to series "{episode.series.title}" (Pending Approval)',
             metadata={
-                'episode_id': episode.id, 
+                'episode_id': episode.id,
                 'series_id': episode.series.id,
                 'season': episode.season_number,
-                'episode': episode.episode_number
+                'episode': episode.episode_number,
+                'approval_status': 'PENDING'
             },
             request=self.request
         )
-    
+
     def perform_destroy(self, instance):
         # Log activity before deletion
         ActivityLog.log_activity(
@@ -134,7 +135,7 @@ class EpisodeManagementViewSet(viewsets.ModelViewSet):
             request=self.request
         )
         instance.delete()
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         series_id = self.request.query_params.get('series_id', None)
@@ -154,43 +155,43 @@ class MusicManagementViewSet(viewsets.ModelViewSet):
 class AnalyticsViewSet(viewsets.ViewSet):
     """Analytics and reporting"""
     permission_classes = [IsAdminUser]
-    
+
     @action(detail=False, methods=['get'])
     def overview(self, request):
         """Get analytics overview"""
-        
+
         # Date calculations
         now = timezone.now()
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        
+
         # User analytics
         new_users_this_month = User.objects.filter(
             date_joined__gte=month_start
         ).count()
-        
+
         total_active_users = User.objects.filter(
             is_active=True
         ).count()
-        
+
         # Content analytics
         most_viewed_videos = list(
             VideoContent.objects.order_by('-view_count')[:10].values(
                 'id', 'title', 'view_count', 'content_type'
             )
         )
-        
+
         most_played_music = list(
             Music.objects.order_by('-play_count')[:10].values(
                 'id', 'title', 'artist', 'play_count'
             )
         )
-        
+
         data = {
             'new_users_this_month': new_users_this_month,
             'total_active_users': total_active_users,
             'most_viewed_videos': most_viewed_videos,
             'most_played_music': most_played_music,
         }
-        
+
         serializer = AnalyticsSerializer(data)
         return Response(serializer.data)

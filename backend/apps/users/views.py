@@ -223,8 +223,8 @@ class UserSubscriptionView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Subscription.DoesNotExist:
             return Response(
-                {"message": "No active subscription found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"message": "No active subscription found", "subscription": None},
+                status=status.HTTP_200_OK
             )
 
 

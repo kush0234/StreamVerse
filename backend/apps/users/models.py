@@ -43,7 +43,7 @@ class Profile(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profiles"
     )
     name = models.CharField(max_length=50)
-    profile_image = CloudinaryField('image', folder='profiles/')
+    profile_image = CloudinaryField('image', folder='profiles/', blank=True, null=True)
     maturity_level = models.CharField(max_length=10, choices=MATURITY_CHOICES, default='ADULT')
     created_at = models.DateTimeField(auto_now_add=True)
 

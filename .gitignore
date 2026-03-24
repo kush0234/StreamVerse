@@ -147,4 +147,9 @@ celerybeat.pid
 .dmypy.json
 dmypy.json
 
+music.json
+videos.json
+
+*.jpg
+
 

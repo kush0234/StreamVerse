@@ -23,17 +23,19 @@ export default function AddEpisode() {
     season_number: 1,
     episode_number: 1,
     duration: '',
+    is_local_upload: false,
+    youtube_url: '',
   });
   const [files, setFiles] = useState({
     video_file: null,
-    thumbnail_file: null,
+    thumbnail: null,
   });
 
   const steps = [
     { id: 1, title: 'Series & Basic Info', description: 'Select series, title, and description' },
-    { id: 2, title: 'Media Files', description: 'Upload video and thumbnail files' },
+    { id: 2, title: 'Upload Method & Files', description: 'Choose upload method and upload video/thumbnail' },
     { id: 3, title: 'Episode Details', description: 'Season, episode number, and duration' },
-    { id: 4, title: 'Review & Submit', description: 'Review all information before submitting' }
+    { id: 4, title: 'Review & Submit', description: 'Review all information before submitting' },
   ];
 
   useEffect(() => {
@@ -45,63 +47,49 @@ export default function AddEpisode() {
       const data = await adminApi.getVideos('SERIES');
       setSeries(data);
     } catch (err) {
-      console.error('Failed to fetch series');
+      console.error('Failed to fetch series', err);
     }
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value || '' }));
-
-    // Track selected series
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : (value || '') }));
     if (name === 'series') {
-      const selected = series.find(s => s.id === parseInt(value));
-      setSelectedSeries(selected);
+      setSelectedSeries(series.find(s => s.id === parseInt(value)) || null);
     }
   };
 
   const handleFileChange = (e) => {
     const { name, files: selectedFiles } = e.target;
-    if (selectedFiles && selectedFiles[0]) {
-      setFiles(prev => ({ ...prev, [name]: selectedFiles[0] }));
+    if (!selectedFiles?.[0]) return;
+    setFiles(prev => ({ ...prev, [name]: selectedFiles[0] }));
 
-      // Auto-calculate duration for video files if series is public domain
-      if (name === 'video_file' && selectedSeries?.is_public_domain) {
-        setCalculatingDuration(true);
-        const file = selectedFiles[0];
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-
-        video.onloadedmetadata = function () {
-          window.URL.revokeObjectURL(video.src);
-          const durationInSeconds = Math.round(video.duration);
-          const durationInMinutes = Math.round(durationInSeconds / 60);
-          setFormData(prev => ({ ...prev, duration: durationInMinutes }));
-          setCalculatingDuration(false);
-        };
-
-        video.onerror = function () {
-          setCalculatingDuration(false);
-          toast.warning('Could not read video metadata. Please enter duration manually.');
-        };
-
-        video.src = URL.createObjectURL(file);
-      }
+    if (name === 'video_file') {
+      setCalculatingDuration(true);
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        setFormData(prev => ({ ...prev, duration: Math.round(video.duration) }));
+        setCalculatingDuration(false);
+      };
+      video.onerror = () => {
+        setCalculatingDuration(false);
+        toast.warning('Could not read video metadata. Please enter duration manually.');
+      };
+      video.src = URL.createObjectURL(selectedFiles[0]);
     }
   };
 
   const validateStep = (step) => {
     switch (step) {
-      case 1:
-        return formData.series && formData.title && formData.description;
+      case 1: return formData.series && formData.title && formData.description;
       case 2:
-        return files.video_file; // Video file is required for new episodes
-      case 3:
-        return formData.season_number && formData.episode_number && formData.duration;
-      case 4:
-        return validateStep(1) && validateStep(2) && validateStep(3);
-      default:
-        return false;
+        if (formData.is_local_upload) return !!files.video_file;
+        return !!formData.youtube_url;
+      case 3: return formData.season_number && formData.episode_number;
+      case 4: return validateStep(1) && validateStep(2) && validateStep(3);
+      default: return false;
     }
   };
 
@@ -114,14 +102,10 @@ export default function AddEpisode() {
     }
   };
 
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const goToStep = (step) => {
-    if (step <= currentStep || completedSteps.has(step - 1)) {
-      setCurrentStep(step);
-    }
+    if (step <= currentStep || completedSteps.has(step - 1)) setCurrentStep(step);
   };
 
   const handleFinalSubmit = async () => {
@@ -130,35 +114,23 @@ export default function AddEpisode() {
       return;
     }
 
-    if (!files.video_file) {
-      toast.warning('Please select a video file');
-      return;
-    }
-
     setLoading(true);
-
     try {
       const formDataToSend = new FormData();
+      formDataToSend.append('series', formData.series);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('season_number', formData.season_number);
+      formDataToSend.append('episode_number', formData.episode_number);
+      if (formData.duration) formDataToSend.append('duration', formData.duration);
 
-      // Append text fields
-      Object.keys(formData).forEach(key => {
-        if (formData[key]) {
-          // Convert duration from minutes to seconds for backend
-          if (key === 'duration') {
-            formDataToSend.append(key, formData[key] * 60);
-          } else {
-            formDataToSend.append(key, formData[key]);
-          }
-        }
-      });
-
-      // Append files
-      if (files.video_file) {
+      if (formData.is_local_upload && files.video_file) {
         formDataToSend.append('video_file', files.video_file);
+      } else if (formData.youtube_url) {
+        formDataToSend.append('video_url', formData.youtube_url);
       }
-      if (files.thumbnail_file) {
-        formDataToSend.append('thumbnail', files.thumbnail_file);
-      }
+
+      if (files.thumbnail) formDataToSend.append('thumbnail', files.thumbnail);
 
       await adminApi.createEpisodeWithFiles(formDataToSend);
       toast.success('Episode added successfully!');
@@ -176,7 +148,7 @@ export default function AddEpisode() {
         <Breadcrumb items={[{ label: 'Episodes', href: '/admin-dashboard/episodes' }, { label: 'Add Episode' }]} />
         <h1 className="text-3xl font-bold text-white mb-4 text-center">Add New Episode</h1>
 
-        {/* Step Progress Indicator */}
+        {/* Step Progress */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             {steps.map((step, index) => (
@@ -193,15 +165,10 @@ export default function AddEpisode() {
                     }`}
                   disabled={step.id > currentStep && !completedSteps.has(step.id - 1)}
                 >
-                  {completedSteps.has(step.id) ? (
-                    <Check size={16} />
-                  ) : (
-                    step.id
-                  )}
+                  {completedSteps.has(step.id) ? <Check size={16} /> : step.id}
                 </button>
                 {index < steps.length - 1 && (
-                  <div className={`w-20 h-0.5 mx-2 ${completedSteps.has(step.id) ? 'bg-green-600' : 'bg-gray-600'
-                    }`} />
+                  <div className={`w-20 h-0.5 mx-2 ${completedSteps.has(step.id) ? 'bg-green-600' : 'bg-gray-600'}`} />
                 )}
               </div>
             ))}
@@ -210,13 +177,10 @@ export default function AddEpisode() {
             <h2 className="text-xl font-semibold text-white mb-1">
               Step {currentStep}: {steps[currentStep - 1].title}
             </h2>
-            <p className="text-gray-400 text-sm">
-              {steps[currentStep - 1].description}
-            </p>
+            <p className="text-gray-400 text-sm">{steps[currentStep - 1].description}</p>
           </div>
         </div>
 
-        {/* Form Content */}
         <div className="bg-gray-800 rounded-lg p-6 w-full">
           {/* Step 1: Series & Basic Info */}
           {currentStep === 1 && (
@@ -231,18 +195,14 @@ export default function AddEpisode() {
                   required
                 >
                   <option value="">-- Select a Series --</option>
-                  {series.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.title}
-                    </option>
+                  {series.map(s => (
+                    <option key={s.id} value={s.id}>{s.title}</option>
                   ))}
                 </select>
                 {selectedSeries && (
                   <div className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded">
                     <p className="text-blue-400 text-sm">
-                      <strong>Selected Series:</strong> {selectedSeries.title}<br />
-                      <strong>Type:</strong> {selectedSeries.is_public_domain ? 'Local Upload' : 'YouTube Embed'}<br />
-                      <strong>Genre:</strong> {selectedSeries.genre}
+                      <strong>Selected:</strong> {selectedSeries.title} &nbsp;|&nbsp; <strong>Genre:</strong> {selectedSeries.genre}
                     </p>
                   </div>
                 )}
@@ -253,7 +213,7 @@ export default function AddEpisode() {
                 <input
                   type="text"
                   name="title"
-                  value={formData.title || ''}
+                  value={formData.title}
                   onChange={handleChange}
                   placeholder="Enter the episode title"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded"
@@ -265,10 +225,10 @@ export default function AddEpisode() {
                 <label className="block text-white mb-2">Description <span className="text-red-500">*</span></label>
                 <textarea
                   name="description"
-                  value={formData.description || ''}
+                  value={formData.description}
                   onChange={handleChange}
                   rows="4"
-                  placeholder="Provide a detailed description of this episode..."
+                  placeholder="Provide a description of this episode..."
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded"
                   required
                 />
@@ -276,80 +236,86 @@ export default function AddEpisode() {
             </div>
           )}
 
-          {/* Step 2: Media Files */}
+          {/* Step 2: Upload Method & Files */}
           {currentStep === 2 && (
-            <div className="space-y-4">
-              {/* Video File Upload */}
-              <div>
-                <label className="block text-white mb-2">Video File <span className="text-red-500">*</span></label>
+            <div className="space-y-6">
+              {/* Upload method toggle */}
+              <div className="bg-blue-900/20 border border-blue-500/30 p-6 rounded">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <span className="text-xl">📁</span> Choose Upload Method
+                </h3>
+                <label className="flex items-start gap-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_local_upload"
+                    checked={formData.is_local_upload}
+                    onChange={handleChange}
+                    className="w-5 h-5 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500 mt-1"
+                  />
+                  <div>
+                    <span className="text-white font-semibold">✅ Upload Local Video File</span>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Check this to upload your own video file. Uncheck to use a YouTube embed URL instead.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Local video upload */}
+              <div className={`bg-green-900/20 border border-green-500/30 p-4 rounded ${!formData.is_local_upload ? 'hidden' : ''}`}>
+                <label className="block text-white mb-2">
+                  📁 Upload Local Video File <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="file"
                   name="video_file"
                   onChange={handleFileChange}
                   accept="video/*"
-                  className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-red-600 file:text-white file:cursor-pointer hover:file:bg-red-700"
-                  required
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white file:cursor-pointer hover:file:bg-green-700"
                 />
                 {files.video_file && (
-                  <p className="text-green-400 text-sm mt-1">
-                    Selected: {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
+                  <p className="text-gray-400 text-sm mt-1">
+                    ✅ Selected: {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
-                <p className="text-gray-500 text-xs mt-1">
-                  Upload MP4 format for best compatibility. Duration will be auto-calculated if series supports it.
-                </p>
+                <p className="text-green-400 text-xs mt-1">🎬 Upload MP4 format for best compatibility. Duration will be auto-calculated.</p>
               </div>
 
-              {/* Thumbnail Upload */}
+              {/* YouTube URL */}
+              <div className={`bg-red-900/20 border border-red-500/30 p-4 rounded ${formData.is_local_upload ? 'hidden' : ''}`}>
+                <label className="block text-white mb-2">
+                  🎬 YouTube Embed URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  name="youtube_url"
+                  value={formData.youtube_url}
+                  onChange={handleChange}
+                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded"
+                />
+                <p className="text-red-400 text-xs mt-1">🔗 Use the embed URL format: https://www.youtube.com/embed/VIDEO_ID</p>
+              </div>
+
+              {/* Thumbnail */}
               <div>
-                <label className="block text-white mb-2">Thumbnail Image (Optional)</label>
+                <label className="block text-white mb-2">🖼️ Thumbnail Image (Optional)</label>
                 <input
                   type="file"
-                  name="thumbnail_file"
+                  name="thumbnail"
                   onChange={handleFileChange}
                   accept="image/*"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-red-600 file:text-white file:cursor-pointer hover:file:bg-red-700"
                 />
-                {files.thumbnail_file && (
-                  <div className="mt-2">
-                    <p className="text-green-400 text-sm">
-                      Selected: {files.thumbnail_file.name}
-                    </p>
-                  </div>
+                {files.thumbnail && (
+                  <p className="text-gray-400 text-sm mt-1">✅ Selected: {files.thumbnail.name}</p>
                 )}
-                <p className="text-gray-500 text-xs mt-1">
-                  Upload a high-quality image that represents this episode. Recommended size: 1920x1080 or 16:9 aspect ratio.
-                </p>
               </div>
 
-              {selectedSeries && (
-                <div className="bg-yellow-900/20 border border-yellow-500/30 p-4 rounded">
-                  <div className="flex items-start gap-3">
-                    <svg className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <p className="text-yellow-400 font-semibold mb-1">File Requirements</p>
-                      <p className="text-gray-300 text-sm">
-                        This episode belongs to "{selectedSeries.title}" which uses {selectedSeries.is_public_domain ? 'local file storage' : 'YouTube embedding'}. 
-                        {selectedSeries.is_public_domain ? ' Duration will be auto-calculated from your video file in the next step.' : ' Please ensure duration is accurate in the next step.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {calculatingDuration && (
-                <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded">
-                  <div className="flex items-center gap-3">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
-                    <div>
-                      <p className="text-blue-400 font-semibold">Calculating Duration</p>
-                      <p className="text-gray-300 text-sm">
-                        Reading video metadata to automatically calculate duration...
-                      </p>
-                    </div>
-                  </div>
+                <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
+                  <p className="text-blue-400 text-sm">Calculating duration from video...</p>
                 </div>
               )}
             </div>
@@ -364,24 +330,21 @@ export default function AddEpisode() {
                   <input
                     type="number"
                     name="season_number"
-                    value={formData.season_number || ''}
+                    value={formData.season_number}
                     onChange={handleChange}
                     min="1"
-                    placeholder="e.g., 1"
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded"
                     required
                   />
                 </div>
-
                 <div>
                   <label className="block text-white mb-2">Episode Number <span className="text-red-500">*</span></label>
                   <input
                     type="number"
                     name="episode_number"
-                    value={formData.episode_number || ''}
+                    value={formData.episode_number}
                     onChange={handleChange}
                     min="1"
-                    placeholder="e.g., 1"
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded"
                     required
                   />
@@ -389,18 +352,21 @@ export default function AddEpisode() {
               </div>
 
               <div>
-                <label className="block text-white mb-2">Duration (minutes) <span className="text-red-500">*</span></label>
+                <label className="block text-white mb-2">
+                  Duration (seconds)
+                  {formData.is_local_upload && <span className="text-gray-400 text-sm ml-1">(Auto-calculated from video)</span>}
+                  {!formData.is_local_upload && <span className="text-gray-400 text-sm ml-1">(Optional for YouTube)</span>}
+                </label>
                 <div className="relative">
                   <input
                     type="number"
                     name="duration"
-                    value={formData.duration || ''}
+                    value={formData.duration}
                     onChange={handleChange}
                     min="1"
-                    placeholder={selectedSeries?.is_public_domain ? "Auto-calculated from video" : "Enter duration"}
+                    placeholder={formData.is_local_upload ? "Will auto-calculate from video" : "Optional"}
                     className="w-full bg-gray-700 text-white px-4 py-2 rounded"
-                    readOnly={selectedSeries?.is_public_domain && files.video_file && formData.duration}
-                    required
+                    readOnly={formData.is_local_upload && !!files.video_file}
                   />
                   {calculatingDuration && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -410,42 +376,19 @@ export default function AddEpisode() {
                 </div>
                 <p className="text-gray-500 text-xs mt-1">
                   {calculatingDuration
-                    ? "⏳ Calculating duration from video..."
-                    : selectedSeries?.is_public_domain && files.video_file && formData.duration
-                      ? `✓ Duration auto-calculated: ${formData.duration} minutes`
-                      : selectedSeries?.is_public_domain && files.video_file
-                        ? "Duration will be calculated from uploaded video"
-                        : selectedSeries?.is_public_domain
-                          ? "Upload a video file first to auto-calculate duration"
-                          : "Enter duration in minutes"}
+                    ? '⏳ Calculating duration from video...'
+                    : formData.duration
+                      ? `✓ Duration: ${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s`
+                      : formData.is_local_upload
+                        ? 'Upload a video file in Step 2 to auto-calculate'
+                        : 'YouTube handles playback timing — duration is optional'}
                 </p>
               </div>
 
               {selectedSeries && (
                 <div className="bg-gray-700/50 p-4 rounded">
-                  <h3 className="text-white font-medium mb-2">Series Information</h3>
                   <p className="text-gray-400 text-sm mb-1"><strong>Series:</strong> {selectedSeries.title}</p>
-                  <p className="text-gray-400 text-sm mb-1"><strong>Genre:</strong> {selectedSeries.genre}</p>
-                  <p className="text-gray-400 text-sm"><strong>Storage Type:</strong> {selectedSeries.is_public_domain ? 'Local Upload' : 'YouTube Embed'}</p>
-                </div>
-              )}
-
-              {files.video_file && (
-                <div className="bg-green-900/20 border border-green-500/30 p-4 rounded">
-                  <div className="flex items-start gap-3">
-                    <svg className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <p className="text-green-400 font-semibold mb-1">Video File Uploaded</p>
-                      <p className="text-gray-300 text-sm">
-                        {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
-                        {selectedSeries?.is_public_domain && formData.duration && 
-                          ` - Duration: ${formData.duration} minutes`
-                        }
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-gray-400 text-sm"><strong>Genre:</strong> {selectedSeries.genre}</p>
                 </div>
               )}
             </div>
@@ -459,38 +402,47 @@ export default function AddEpisode() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-gray-300 font-medium mb-2">Episode Information</h4>
-                    <p className="text-sm text-gray-400 mb-1"><strong>Series:</strong> {series.find(s => s.id === parseInt(formData.series))?.title || 'Not selected'}</p>
+                    <p className="text-sm text-gray-400 mb-1"><strong>Series:</strong> {selectedSeries?.title || '—'}</p>
                     <p className="text-sm text-gray-400 mb-1"><strong>Title:</strong> {formData.title}</p>
                     <p className="text-sm text-gray-400 mb-1"><strong>Season:</strong> {formData.season_number}</p>
                     <p className="text-sm text-gray-400"><strong>Episode:</strong> {formData.episode_number}</p>
                   </div>
                   <div>
-                    <h4 className="text-gray-300 font-medium mb-2">Episode Details</h4>
-                    <p className="text-sm text-gray-400 mb-1"><strong>Duration:</strong> {formData.duration ? `${formData.duration} minutes` : 'Not set'}</p>
-                    <p className="text-sm text-gray-400 mb-1"><strong>Description:</strong> {formData.description ? 'Set' : 'Not set'}</p>
+                    <h4 className="text-gray-300 font-medium mb-2">Content Details</h4>
+                    <p className="text-sm text-gray-400 mb-1"><strong>Storage:</strong> {formData.is_local_upload ? 'Local Upload' : 'YouTube Embed'}</p>
+                    <p className="text-sm text-gray-400 mb-1"><strong>Duration:</strong> {formData.duration ? `${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s` : 'Not set'}</p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <h4 className="text-gray-300 font-medium mb-2">Files</h4>
                   <p className="text-sm text-gray-400 mb-1">
-                    <strong>Video:</strong> {files.video_file ? files.video_file.name : 'None selected'}
+                    <strong>Video:</strong> {files.video_file ? files.video_file.name : formData.youtube_url || 'None'}
                   </p>
                   <p className="text-sm text-gray-400">
-                    <strong>Thumbnail:</strong> {files.thumbnail_file ? files.thumbnail_file.name : 'None selected'}
+                    <strong>Thumbnail:</strong> {files.thumbnail ? files.thumbnail.name : 'None'}
                   </p>
                 </div>
               </div>
 
-              {/* Submit Notice */}
-              <div className="bg-green-900/20 border border-green-500/30 p-4 rounded">
+              <div className="bg-green-900/20 border border-green-500/30 p-4 rounded flex items-start gap-3">
+                <svg className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-green-400 font-semibold mb-1">Ready to Submit</p>
+                  <p className="text-gray-300 text-sm">Review the information above and click "Add Episode" to save.</p>
+                </div>
+              </div>
+
+              <div className="bg-yellow-900/20 border border-yellow-500/30 p-4 rounded">
                 <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <div>
-                    <p className="text-green-400 font-semibold mb-1">Ready to Submit</p>
+                    <p className="text-yellow-400 font-semibold mb-1">Approval Required</p>
                     <p className="text-gray-300 text-sm">
-                      Review your episode information above and click "Add Episode" to create the episode.
+                      This episode will be submitted for approval. Only SuperAdmin can approve it to make it visible to users.
                     </p>
                   </div>
                 </div>
@@ -498,7 +450,7 @@ export default function AddEpisode() {
             </div>
           )}
 
-          {/* Navigation Buttons */}
+          {/* Navigation */}
           <div className="flex justify-between pt-6 mt-6 border-t border-gray-700">
             <button
               type="button"
@@ -506,10 +458,8 @@ export default function AddEpisode() {
               disabled={currentStep === 1}
               className="flex items-center gap-2 bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ArrowLeft size={16} />
-              Previous
+              <ArrowLeft size={16} /> Previous
             </button>
-
             <div className="flex gap-4">
               {currentStep < steps.length ? (
                 <button
@@ -517,8 +467,7 @@ export default function AddEpisode() {
                   onClick={nextStep}
                   className="flex items-center gap-2 bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
                 >
-                  Next
-                  <ArrowRight size={16} />
+                  Next <ArrowRight size={16} />
                 </button>
               ) : (
                 <button
@@ -527,8 +476,7 @@ export default function AddEpisode() {
                   disabled={loading || !validateStep(4)}
                   className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                 >
-                  {loading ? 'Adding...' : 'Add Episode'}
-                  <Check size={16} />
+                  {loading ? 'Adding...' : 'Add Episode'} <Check size={16} />
                 </button>
               )}
             </div>

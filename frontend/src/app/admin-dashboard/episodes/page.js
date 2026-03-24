@@ -15,6 +15,12 @@ import { useToast } from '@/context/ToastContext';
 
 const PAGE_SIZE = 10;
 
+const STATUS_STYLES = {
+  APPROVED: 'bg-green-600',
+  PENDING: 'bg-yellow-600',
+  REJECTED: 'bg-red-600',
+};
+
 export default function EpisodesManagement() {
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +120,7 @@ export default function EpisodesManagement() {
                   <SortableHeader label="Season" sortKey="season_number" {...sharedHeaderProps} />
                   <SortableHeader label="Episode" sortKey="episode_number" {...sharedHeaderProps} />
                   <SortableHeader label="Duration" sortKey="duration" {...sharedHeaderProps} />
+                  <SortableHeader label="Status" sortKey="approval_status" {...sharedHeaderProps} />
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Actions</th>
                 </tr>
               </thead>
@@ -125,7 +132,12 @@ export default function EpisodesManagement() {
                     <td className="px-4 py-3 text-gray-300 max-w-[180px] truncate">{episode.title}</td>
                     <td className="px-4 py-3 text-gray-400">S{episode.season_number}</td>
                     <td className="px-4 py-3 text-gray-400">E{episode.episode_number}</td>
-                    <td className="px-4 py-3 text-gray-400">{Math.round(episode.duration / 60)} min</td>
+                    <td className="px-4 py-3 text-gray-400">{episode.duration ? `${Math.round(episode.duration / 60)} min` : '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded text-xs text-white ${STATUS_STYLES[episode.approval_status] || 'bg-gray-600'}`}>
+                        {episode.approval_status || 'PENDING'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <Link href={`/admin-dashboard/episodes/edit/${episode.id}`} className="p-1.5 text-blue-400 hover:bg-blue-500/20 rounded transition-colors" title="Edit">

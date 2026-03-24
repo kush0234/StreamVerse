@@ -6,7 +6,11 @@ class IsAdminUser(permissions.BasePermission):
     Custom permission to only allow admin users to access the view.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.is_staff
+        return (
+            request.user and
+            request.user.is_authenticated and
+            request.user.role in ['ADMIN', 'SUPERADMIN']
+        )
 
 
 class IsSuperAdmin(permissions.BasePermission):
@@ -15,8 +19,8 @@ class IsSuperAdmin(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return (
-            request.user and 
-            request.user.is_authenticated and 
+            request.user and
+            request.user.is_authenticated and
             request.user.role == 'SUPERADMIN'
         )
 
@@ -27,7 +31,7 @@ class IsAdminOrSuperAdmin(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return (
-            request.user and 
-            request.user.is_authenticated and 
+            request.user and
+            request.user.is_authenticated and
             request.user.role in ['ADMIN', 'SUPERADMIN']
         )

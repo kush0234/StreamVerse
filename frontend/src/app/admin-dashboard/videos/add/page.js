@@ -286,83 +286,77 @@ export default function AddVideo() {
           {/* Step 2: Media Files */}
           {currentStep === 2 && (
             <div className="space-y-6">
-              {/* Storage Type Selection - Move to Step 2 */}
-              {!formData.is_coming_soon && (
-                <div className="bg-blue-900/20 border border-blue-500/30 p-6 rounded mb-6">
-                  <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                    <span className="text-xl">📁</span>
-                    Choose Upload Method
-                  </h3>
-                  <label className="flex items-start gap-4 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="is_public_domain"
-                      checked={formData.is_public_domain}
-                      onChange={handleChange}
-                      className="w-5 h-5 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500 mt-1"
-                    />
-                    <div>
-                      <span className="text-white font-semibold">✅ Upload Local Video File</span>
-                      <p className="text-gray-400 text-sm mt-1">
-                        Check this to upload your own video file. Uncheck to use YouTube embed URL instead.
-                      </p>
+              {/* Upload method + video — only for MOVIE type */}
+              {formData.content_type === 'MOVIE' && !formData.is_coming_soon && (
+                <>
+                  <div className="bg-blue-900/20 border border-blue-500/30 p-6 rounded mb-6">
+                    <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                      <span className="text-xl">📁</span>
+                      Choose Upload Method
+                    </h3>
+                    <label className="flex items-start gap-4 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="is_public_domain"
+                        checked={formData.is_public_domain}
+                        onChange={handleChange}
+                        className="w-5 h-5 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500 mt-1"
+                      />
+                      <div>
+                        <span className="text-white font-semibold">✅ Upload Local Video File</span>
+                        <p className="text-gray-400 text-sm mt-1">
+                          Check this to upload your own video file. Uncheck to use YouTube embed URL instead.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div>
+                    <div className={`bg-green-900/20 border border-green-500/30 p-4 rounded ${!formData.is_public_domain ? 'hidden' : ''}`}>
+                      <label className="block text-white mb-2">
+                        📁 Upload Local Video File <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="file"
+                        name="video_file"
+                        onChange={handleFileChange}
+                        accept="video/*"
+                        className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white file:cursor-pointer hover:file:bg-green-700"
+                        required={formData.is_public_domain}
+                      />
+                      {files.video_file && (
+                        <p className="text-gray-400 text-sm mt-1">
+                          ✅ Selected: {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      )}
+                      <p className="text-green-400 text-xs mt-1">🎬 Upload MP4 format for best compatibility. Duration will be auto-calculated.</p>
                     </div>
-                  </label>
-                </div>
+
+                    <div className={`bg-red-900/20 border border-red-500/30 p-4 rounded ${formData.is_public_domain ? 'hidden' : ''}`}>
+                      <label className="block text-white mb-2">
+                        🎬 YouTube Embed URL <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        name="youtube_trailer_url"
+                        value={formData.youtube_trailer_url || ''}
+                        onChange={handleChange}
+                        placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                        className="w-full bg-gray-700 text-white px-4 py-2 rounded"
+                        required={!formData.is_public_domain}
+                      />
+                      <p className="text-red-400 text-xs mt-1">🔗 Use the embed URL format: https://www.youtube.com/embed/VIDEO_ID</p>
+                    </div>
+                  </div>
+                </>
               )}
 
-              {/* Video File Upload - Always render both, control visibility with CSS */}
-              {!formData.is_coming_soon && (
-                <div>
-                  {/* Local Video Upload */}
-                  <div className={`bg-green-900/20 border border-green-500/30 p-4 rounded ${!formData.is_public_domain ? 'hidden' : ''}`}>
-                    <label className="block text-white mb-2">
-                      📁 Upload Local Video File
-                      {formData.content_type === 'MOVIE' && <span className="text-red-500">*</span>}
-                      {formData.content_type === 'SERIES' && <span className="text-gray-400 text-sm ml-2">(Optional - for trailer/promo)</span>}
-                    </label>
-                    <input
-                      type="file"
-                      name="video_file"
-                      onChange={handleFileChange}
-                      accept="video/*"
-                      className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white file:cursor-pointer hover:file:bg-green-700"
-                      required={formData.content_type === 'MOVIE' && formData.is_public_domain}
-                    />
-                    {files.video_file && (
-                      <p className="text-gray-400 text-sm mt-1">
-                        ✅ Selected: {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
-                      </p>
-                    )}
-                    <p className="text-green-400 text-xs mt-1">
-                      {formData.content_type === 'SERIES'
-                        ? '📺 Optional: Upload a trailer or promo video. Add episodes separately after creating the series.'
-                        : '🎬 Upload MP4 format for best compatibility. Duration will be auto-calculated.'}
-                    </p>
-                  </div>
-
-                  {/* YouTube URL Input */}
-                  <div className={`bg-red-900/20 border border-red-500/30 p-4 rounded ${formData.is_public_domain ? 'hidden' : ''}`}>
-                    <label className="block text-white mb-2">
-                      🎬 YouTube Embed URL
-                      {formData.content_type === 'MOVIE' && <span className="text-red-500">*</span>}
-                      {formData.content_type === 'SERIES' && <span className="text-gray-400 text-sm ml-2">(Optional - for trailer/promo)</span>}
-                    </label>
-                    <input
-                      type="url"
-                      name="youtube_trailer_url"
-                      value={formData.youtube_trailer_url || ''}
-                      onChange={handleChange}
-                      placeholder="https://www.youtube.com/embed/VIDEO_ID"
-                      className="w-full bg-gray-700 text-white px-4 py-2 rounded"
-                      required={formData.content_type === 'MOVIE' && !formData.is_public_domain}
-                    />
-                    <p className="text-red-400 text-xs mt-1">
-                      {formData.content_type === 'SERIES'
-                        ? '📺 Optional: Add a YouTube trailer. Add episodes separately after creating the series.'
-                        : '🔗 Use the embed URL format: https://www.youtube.com/embed/VIDEO_ID'}
-                    </p>
-                  </div>
+              {/* Series info banner instead of upload fields */}
+              {formData.content_type === 'SERIES' && !formData.is_coming_soon && (
+                <div className="bg-blue-900/20 border border-blue-500/30 p-6 rounded">
+                  <p className="text-blue-400 text-sm">
+                    📺 Series don't have a direct video file. After creating the series, add episodes from the Episodes section — each episode will have its own video.
+                  </p>
                 </div>
               )}
 
@@ -439,40 +433,42 @@ export default function AddVideo() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-white mb-2">
-                    Duration (seconds)
-                    {formData.is_public_domain && <span className="text-gray-400 text-sm ml-1">(Auto-calculated from video)</span>}
-                    {!formData.is_public_domain && <span className="text-gray-400 text-sm ml-1">(Optional for YouTube)</span>}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="duration"
-                      value={formData.duration || ''}
-                      onChange={handleChange}
-                      min="1"
-                      placeholder={formData.is_public_domain ? "Will auto-calculate from video" : "Optional - leave empty for YouTube"}
-                      className="w-full bg-gray-700 text-white px-4 py-2 rounded"
-                      readOnly={formData.is_public_domain && files.video_file}
-                    />
-                    {calculatingDuration && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      </div>
-                    )}
+                {formData.content_type === 'MOVIE' && (
+                  <div>
+                    <label className="block text-white mb-2">
+                      Duration (seconds)
+                      {formData.is_public_domain && <span className="text-gray-400 text-sm ml-1">(Auto-calculated from video)</span>}
+                      {!formData.is_public_domain && <span className="text-gray-400 text-sm ml-1">(Optional for YouTube)</span>}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="duration"
+                        value={formData.duration || ''}
+                        onChange={handleChange}
+                        min="1"
+                        placeholder={formData.is_public_domain ? "Will auto-calculate from video" : "Optional - leave empty for YouTube"}
+                        className="w-full bg-gray-700 text-white px-4 py-2 rounded"
+                        readOnly={formData.is_public_domain && files.video_file}
+                      />
+                      {calculatingDuration && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {calculatingDuration
+                        ? "⏳ Calculating duration from video..."
+                        : formData.is_public_domain
+                          ? formData.duration
+                            ? `✓ Duration: ${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s`
+                            : "Leave empty to auto-calculate from uploaded video"
+                          : "🎬 Duration is optional for YouTube videos - YouTube handles playback timing"
+                      }
+                    </p>
                   </div>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {calculatingDuration
-                      ? "⏳ Calculating duration from video..."
-                      : formData.is_public_domain
-                        ? formData.duration
-                          ? `✓ Duration: ${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s`
-                          : "Leave empty to auto-calculate from uploaded video"
-                        : "🎬 Duration is optional for YouTube videos - YouTube handles playback timing"
-                    }
-                  </p>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -513,29 +509,31 @@ export default function AddVideo() {
                 </label>
               </div>
 
-              {/* Upload Method Summary */}
-              <div className="bg-gray-700/50 p-6 rounded">
-                <h3 className="text-white font-semibold mb-4">📋 Upload Method Summary</h3>
-                <div className="flex items-center gap-3">
-                  {formData.is_public_domain ? (
-                    <div className="flex items-center gap-2 text-green-400">
-                      <span className="text-xl">✅</span>
-                      <span>Local Video Upload Selected</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-red-400">
-                      <span className="text-xl">🎬</span>
-                      <span>YouTube Embed URL Selected</span>
-                    </div>
-                  )}
+              {/* Upload Method Summary - only relevant for movies */}
+              {formData.content_type === 'MOVIE' && (
+                <div className="bg-gray-700/50 p-6 rounded">
+                  <h3 className="text-white font-semibold mb-4">📋 Upload Method Summary</h3>
+                  <div className="flex items-center gap-3">
+                    {formData.is_public_domain ? (
+                      <div className="flex items-center gap-2 text-green-400">
+                        <span className="text-xl">✅</span>
+                        <span>Local Video Upload Selected</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-red-400">
+                        <span className="text-xl">🎬</span>
+                        <span>YouTube Embed URL Selected</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-gray-400 text-sm mt-2">
+                    {formData.is_public_domain
+                      ? "You chose to upload a local video file. Make sure to upload your video in Step 2."
+                      : "You chose to use YouTube embed URL. Make sure to provide the embed URL in Step 2."
+                    }
+                  </p>
                 </div>
-                <p className="text-gray-400 text-sm mt-2">
-                  {formData.is_public_domain 
-                    ? "You chose to upload a local video file. Make sure to upload your video in Step 2."
-                    : "You chose to use YouTube embed URL. Make sure to provide the embed URL in Step 2."
-                  }
-                </p>
-              </div>
+              )}
             </div>
           )}
 
@@ -555,9 +553,10 @@ export default function AddVideo() {
                   <div>
                     <h4 className="text-gray-300 font-medium mb-2">Content Details</h4>
                     <p className="text-sm text-gray-400 mb-1"><strong>Rating:</strong> {formData.rating || 'Not set'}</p>
-                    <p className="text-sm text-gray-400 mb-1"><strong>Duration:</strong> {formData.duration ? `${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s` : 'Not set'}</p>
+                    {formData.content_type === 'MOVIE' && <p className="text-sm text-gray-400 mb-1"><strong>Duration:</strong> {formData.duration ? `${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s` : 'Not set'}</p>}
                     <p className="text-sm text-gray-400 mb-1"><strong>Coming Soon:</strong> {formData.is_coming_soon ? 'Yes' : 'No'}</p>
-                    <p className="text-sm text-gray-400"><strong>Storage:</strong> {formData.is_public_domain ? 'Local Upload' : 'YouTube Embed'}</p>
+                    {formData.content_type === 'MOVIE' && <p className="text-sm text-gray-400"><strong>Storage:</strong> {formData.is_public_domain ? 'Local Upload' : 'YouTube Embed'}</p>}
+                    {formData.content_type === 'SERIES' && <p className="text-sm text-gray-400"><strong>Storage:</strong> Per episode</p>}
                   </div>
                 </div>
                 <div className="mt-4">

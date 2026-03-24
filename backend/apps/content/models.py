@@ -118,6 +118,13 @@ class VideoContent(models.Model):
 
 class Episode(models.Model):
     """Episodes for web series"""
+
+    APPROVAL_STATUS_CHOICES = [
+        ('PENDING', 'Pending Approval'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    ]
+
     series = models.ForeignKey(
         VideoContent,
         on_delete=models.CASCADE,
@@ -130,7 +137,7 @@ class Episode(models.Model):
     description = models.TextField(blank=True, null=True)
     video_url = CloudinaryField('video', blank=True, null=True)
     thumbnail = CloudinaryField('image', blank=True, null=True)
-    duration = models.IntegerField()
+    duration = models.IntegerField(blank=True, null=True)
 
     # Hybrid storage for episodes
     video_file = models.FileField(
@@ -138,6 +145,14 @@ class Episode(models.Model):
         blank=True,
         null=True,
         help_text="Local video file for public domain episodes"
+    )
+
+    # Approval workflow
+    approval_status = models.CharField(
+        max_length=20,
+        choices=APPROVAL_STATUS_CHOICES,
+        default='PENDING',
+        help_text='Episode approval status'
     )
 
     class Meta:

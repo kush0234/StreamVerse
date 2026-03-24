@@ -3,13 +3,10 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import LoadingSpinner from '@/components/admin/LoadingSpinner';
-import { BarChart3, Users, Video, Music, RefreshCw, TrendingUp } from 'lucide-react';
+import { Users, Video, Music, RefreshCw, Mic2, Film } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
 } from 'recharts';
-
-const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4'];
 
 function StatCard({ icon: Icon, label, value, accent }) {
   return (
@@ -56,10 +53,26 @@ export default function Analytics() {
     .slice(0, 8)
     .map(m => ({ name: m.title.length > 16 ? m.title.slice(0, 16) + '…' : m.title, plays: m.play_count }));
 
-  const contentTypePie = [
-    { name: 'Videos', value: analytics?.most_viewed_videos?.length || 0 },
-    { name: 'Music', value: analytics?.most_played_music?.length || 0 },
-  ].filter(d => d.value > 0);
+  // Plays grouped by artist
+  const artistData = Object.values(
+    (analytics?.most_played_music || []).reduce((acc, m) => {
+      const artist = m.artist || 'Unknown';
+      acc[artist] = acc[artist] || { artist: artist.length > 14 ? artist.slice(0, 14) + '…' : artist, plays: 0 };
+      acc[artist].plays += m.play_count || 0;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.plays - a.plays).slice(0, 8);
+
+  // Content type breakdown from videos
+  const contentTypeData = Object.values(
+    (analytics?.most_viewed_videos || []).reduce((acc, v) => {
+      const type = v.content_type ? v.content_type.charAt(0).toUpperCase() + v.content_type.slice(1) : 'Other';
+      acc[type] = acc[type] || { type, views: 0 };
+      acc[type].views += v.view_count || 0;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.views - a.views);
+
 
   return (
     <div className="space-y-6">
@@ -87,10 +100,10 @@ export default function Analytics() {
         <StatCard icon={Music} label="Top Tracks Tracked" value={analytics?.most_played_music?.length} accent="text-green-400" />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Charts Row: Videos + Music side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Most Viewed Videos Bar Chart */}
-        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-5 border border-gray-700">
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
           <div className="flex items-center gap-2 mb-4">
             <Video size={18} className="text-purple-400" />
             <h2 className="text-base font-semibold text-white">Most Viewed Videos</h2>
@@ -110,49 +123,73 @@ export default function Analytics() {
           )}
         </div>
 
-        {/* Content Type Pie */}
+        {/* Most Played Music Bar Chart */}
         <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 size={18} className="text-yellow-400" />
-            <h2 className="text-base font-semibold text-white">Content Breakdown</h2>
+            <Music size={18} className="text-green-400" />
+            <h2 className="text-base font-semibold text-white">Most Played Music</h2>
           </div>
-          {contentTypePie.length > 0 ? (
+          {musicChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={contentTypePie} cx="50%" cy="45%" outerRadius={75} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                  {contentTypePie.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} itemStyle={{ color: '#fff' }} />
-                <Legend wrapperStyle={{ color: '#9ca3af', fontSize: 12 }} />
-              </PieChart>
+              <BarChart data={musicChartData} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
+                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#4ade80' }} />
+                <Bar dataKey="plays" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-500 text-sm text-center py-16">No data available</p>
+            <p className="text-gray-500 text-sm text-center py-12">No music data available</p>
           )}
         </div>
       </div>
 
-      {/* Most Played Music Bar Chart */}
-      <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-        <div className="flex items-center gap-2 mb-4">
-          <Music size={18} className="text-green-400" />
-          <h2 className="text-base font-semibold text-white">Most Played Music</h2>
+      {/* Bottom Row: Artist Plays + Content Type */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* Plays by Artist */}
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="flex items-center gap-2 mb-4">
+            <Mic2 size={18} className="text-pink-400" />
+            <h2 className="text-base font-semibold text-white">Plays by Artist</h2>
+          </div>
+          {artistData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={artistData} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
+                <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                <YAxis type="category" dataKey="artist" tick={{ fill: '#9ca3af', fontSize: 11 }} width={80} />
+                <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#f472b6' }} />
+                <Bar dataKey="plays" fill="#ec4899" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-16">No artist data available</p>
+          )}
         </div>
-        {musicChartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={musicChartData} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
-              <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#4ade80' }} />
-              <Bar dataKey="plays" fill="#22c55e" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-gray-500 text-sm text-center py-12">No music data available</p>
-        )}
+
+        {/* Content Type Breakdown */}
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="flex items-center gap-2 mb-4">
+            <Film size={18} className="text-orange-400" />
+            <h2 className="text-base font-semibold text-white">Views by Content Type</h2>
+          </div>
+          {contentTypeData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={contentTypeData} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
+                <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                <YAxis type="category" dataKey="type" tick={{ fill: '#9ca3af', fontSize: 11 }} width={60} />
+                <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fb923c' }} />
+                <Bar dataKey="views" fill="#f97316" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-16">No content type data available</p>
+          )}
+        </div>
+
       </div>
     </div>
   );

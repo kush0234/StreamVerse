@@ -197,8 +197,12 @@ class MusicSerializer(serializers.ModelSerializer):
 
     def get_audio_url(self, obj):
         if obj.audio_file:
-            # CloudinaryField returns the full URL via .url property
-            return obj.audio_file.url
+            import cloudinary
+            public_id = str(obj.audio_file)
+            if not public_id.endswith('.mp3'):
+                public_id = public_id + '.mp3'
+            url, _ = cloudinary.utils.cloudinary_url(public_id, resource_type="raw")
+            return url
         return None
 
 

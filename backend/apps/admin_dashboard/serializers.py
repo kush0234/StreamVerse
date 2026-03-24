@@ -18,7 +18,7 @@ class VideoManagementSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField(read_only=True)
     video_url = serializers.SerializerMethodField(read_only=True)
     trailer_url = serializers.SerializerMethodField(read_only=True)
-    
+
     class Meta:
         model = VideoContent
         fields = '__all__'
@@ -26,12 +26,12 @@ class VideoManagementSerializer(serializers.ModelSerializer):
             'thumbnail': {'write_only': False, 'required': False},
             'video_file': {'write_only': False, 'required': False},
         }
-    
+
     def get_episodes_count(self, obj):
         if obj.content_type == 'SERIES':
             return obj.episodes.count()
         return 0
-    
+
     def get_thumbnail_url(self, obj):
         if obj.thumbnail:
             try:
@@ -39,7 +39,7 @@ class VideoManagementSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
-    
+
     def get_video_url(self, obj):
         """Return appropriate video URL based on storage type"""
         if obj.is_public_domain and obj.video_file:
@@ -52,7 +52,7 @@ class VideoManagementSerializer(serializers.ModelSerializer):
             # YouTube embed
             return obj.youtube_trailer_url
         return None
-    
+
     def get_trailer_url(self, obj):
         if obj.trailer_url:
             try:
@@ -60,7 +60,7 @@ class VideoManagementSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
-    
+
     def to_representation(self, instance):
         """Add thumbnail_url to response"""
         data = super().to_representation(instance)
@@ -75,14 +75,14 @@ class EpisodeManagementSerializer(serializers.ModelSerializer):
     series_title = serializers.CharField(source='series.title', read_only=True)
     video_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Episode
         fields = '__all__'
         extra_kwargs = {
             'thumbnail': {'write_only': False, 'required': False},
         }
-    
+
     def get_video_url(self, obj):
         """Return video URL from either local or Cloudinary"""
         if obj.video_file:
@@ -98,7 +98,7 @@ class EpisodeManagementSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
-    
+
     def get_thumbnail_url(self, obj):
         if obj.thumbnail:
             try:
@@ -106,7 +106,7 @@ class EpisodeManagementSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
-    
+
     def to_representation(self, instance):
         """Add thumbnail URL to response"""
         data = super().to_representation(instance)
@@ -117,25 +117,24 @@ class EpisodeManagementSerializer(serializers.ModelSerializer):
 class MusicManagementSerializer(serializers.ModelSerializer):
     """Serializer for music management"""
     audio_url = serializers.SerializerMethodField()
-    thumbnail = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Music
         fields = '__all__'
-    
+
     def get_audio_url(self, obj):
         if obj.audio_file:
             try:
-                return obj.audio_file.url
-            except:
-                return None
-        return None
-    
-    def get_thumbnail(self, obj):
-        if obj.thumbnail:
-            try:
-                return obj.thumbnail.url
-            except:
+                import cloudinary
+                public_id = str(obj.audio_file)
+                if not public_id.endswith('.mp3'):
+                    public_id = public_id + '.mp3'
+                url, _ = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    resource_type="raw",
+                )
+                return url
+            except Exception:
                 return None
         return None
 
@@ -145,7 +144,7 @@ class AnalyticsSerializer(serializers.Serializer):
     # User analytics
     new_users_this_month = serializers.IntegerField()
     total_active_users = serializers.IntegerField()
-    
+
     # Content analytics
     most_viewed_videos = serializers.ListField()
     most_played_music = serializers.ListField()
@@ -158,21 +157,21 @@ class ActivityLogSerializer(serializers.ModelSerializer):
     icon = serializers.CharField(read_only=True)
     color = serializers.CharField(read_only=True)
     time_ago = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = ActivityLog
         fields = [
-            'id', 'activity_type', 'username', 'user_email', 'description', 
+            'id', 'activity_type', 'username', 'user_email', 'description',
             'metadata', 'icon', 'color', 'created_at', 'time_ago'
         ]
-    
+
     def get_time_ago(self, obj):
         from django.utils import timezone
         from datetime import timedelta
-        
+
         now = timezone.now()
         diff = now - obj.created_at
-        
+
         if diff.days > 0:
             return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
         elif diff.seconds > 3600:

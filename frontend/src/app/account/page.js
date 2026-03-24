@@ -71,10 +71,7 @@ export default function AccountPage() {
       alert('Please enter a profile name');
       return;
     }
-    if (!profileImage) {
-      alert('Please select a profile image');
-      return;
-    }
+
 
     const token = localStorage.getItem('access_token');
     try {
@@ -551,8 +548,8 @@ export default function AccountPage() {
                               key={plan.id}
                               onClick={() => router.push('/plans')}
                               className={`relative rounded-xl p-5 border-2 cursor-pointer transition-all hover:scale-105 ${isPopular
-                                  ? 'border-blue-500 bg-blue-900/20 shadow-lg shadow-blue-500/20'
-                                  : 'border-gray-700 bg-gray-800/30 hover:border-gray-500'
+                                ? 'border-blue-500 bg-blue-900/20 shadow-lg shadow-blue-500/20'
+                                : 'border-gray-700 bg-gray-800/30 hover:border-gray-500'
                                 }`}
                             >
                               {isPopular && (

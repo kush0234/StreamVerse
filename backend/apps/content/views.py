@@ -190,25 +190,25 @@ class ArtistListView(APIView):
     def get(self, request):
         from django.db.models import Count, Sum
         from .serializers import ArtistSerializer
-        
+
         # Aggregate artists from Music model
         artists_data = Music.objects.values('artist').annotate(
             track_count=Count('id'),
             total_plays=Sum('play_count')
         ).order_by('artist')
-        
+
         # Get genres for each artist
         artists = []
         for artist_data in artists_data:
             artist_name = artist_data['artist']
-            
+
             # Get unique genres for this artist
             genres = list(Music.objects.filter(artist=artist_name).values_list('genre', flat=True).distinct())
-            
+
             # Get thumbnail from the most recent track
             recent_track = Music.objects.filter(artist=artist_name).order_by('-created_at').first()
-            thumbnail = recent_track.thumbnail.url if recent_track and recent_track.thumbnail else None
-            
+            thumbnail = None
+
             artists.append({
                 'name': artist_name,
                 'track_count': artist_data['track_count'],
@@ -216,7 +216,7 @@ class ArtistListView(APIView):
                 'genres': genres,
                 'thumbnail': thumbnail
             })
-        
+
         serializer = ArtistSerializer(artists, many=True)
         return Response(serializer.data)
 
@@ -228,23 +228,23 @@ class ArtistDetailView(APIView):
     def get(self, request, artist_name):
         from django.db.models import Count, Sum
         from .serializers import ArtistSerializer, MusicSerializer
-        
+
         # Get artist info
         artist_tracks = Music.objects.filter(artist=artist_name)
         if not artist_tracks.exists():
             return Response({'error': 'Artist not found'}, status=404)
-        
+
         # Aggregate artist data
         artist_data = artist_tracks.aggregate(
             track_count=Count('id'),
             total_plays=Sum('play_count')
         )
-        
+
         # Get genres and thumbnail
         genres = list(artist_tracks.values_list('genre', flat=True).distinct())
         recent_track = artist_tracks.order_by('-created_at').first()
-        thumbnail = recent_track.thumbnail.url if recent_track and recent_track.thumbnail else None
-        
+        thumbnail = None
+
         artist_info = {
             'name': artist_name,
             'track_count': artist_data['track_count'],
@@ -252,13 +252,13 @@ class ArtistDetailView(APIView):
             'genres': genres,
             'thumbnail': thumbnail
         }
-        
+
         # Get all tracks by this artist
         tracks = artist_tracks.order_by('-created_at')
-        
+
         artist_serializer = ArtistSerializer(artist_info)
         tracks_serializer = MusicSerializer(tracks, many=True, context={'request': request})
-        
+
         return Response({
             'artist': artist_serializer.data,
             'tracks': tracks_serializer.data
@@ -272,29 +272,29 @@ class AlbumListView(APIView):
     def get(self, request):
         from django.db.models import Count, Sum, Min
         from .serializers import AlbumSerializer
-        
+
         # Aggregate albums from Music model (exclude null albums)
         albums_data = Music.objects.exclude(album__isnull=True).exclude(album='').values('album', 'artist').annotate(
             track_count=Count('id'),
             total_duration=Sum('duration'),
             release_date=Min('release_date')
         ).order_by('-release_date')
-        
+
         albums = []
         for album_data in albums_data:
             album_title = album_data['album']
             artist_name = album_data['artist']
-            
+
             # Get thumbnail from the first track in album
             first_track = Music.objects.filter(album=album_title, artist=artist_name).first()
-            thumbnail = first_track.thumbnail.url if first_track and first_track.thumbnail else None
-            
+            thumbnail = None
+
             # Format duration
             total_seconds = album_data['total_duration'] or 0
             minutes = total_seconds // 60
             seconds = total_seconds % 60
             duration_formatted = f"{minutes}:{seconds:02d}"
-            
+
             albums.append({
                 'title': album_title,
                 'artist': artist_name,
@@ -304,7 +304,7 @@ class AlbumListView(APIView):
                 'release_date': album_data['release_date'],
                 'thumbnail': thumbnail
             })
-        
+
         serializer = AlbumSerializer(albums, many=True)
         return Response(serializer.data)
 
@@ -316,29 +316,29 @@ class AlbumDetailView(APIView):
     def get(self, request, artist_name, album_title):
         from django.db.models import Count, Sum, Min
         from .serializers import AlbumSerializer, MusicSerializer
-        
+
         # Get album tracks
         album_tracks = Music.objects.filter(artist=artist_name, album=album_title)
         if not album_tracks.exists():
             return Response({'error': 'Album not found'}, status=404)
-        
+
         # Aggregate album data
         album_data = album_tracks.aggregate(
             track_count=Count('id'),
             total_duration=Sum('duration'),
             release_date=Min('release_date')
         )
-        
+
         # Get thumbnail
         first_track = album_tracks.first()
-        thumbnail = first_track.thumbnail.url if first_track and first_track.thumbnail else None
-        
+        thumbnail = None
+
         # Format duration
         total_seconds = album_data['total_duration'] or 0
         minutes = total_seconds // 60
         seconds = total_seconds % 60
         duration_formatted = f"{minutes}:{seconds:02d}"
-        
+
         album_info = {
             'title': album_title,
             'artist': artist_name,
@@ -348,13 +348,13 @@ class AlbumDetailView(APIView):
             'release_date': album_data['release_date'],
             'thumbnail': thumbnail
         }
-        
+
         # Get all tracks in this album
         tracks = album_tracks.order_by('created_at')
-        
+
         album_serializer = AlbumSerializer(album_info)
         tracks_serializer = MusicSerializer(tracks, many=True, context={'request': request})
-        
+
         return Response({
             'album': album_serializer.data,
             'tracks': tracks_serializer.data
@@ -450,7 +450,7 @@ class ComingSoonView(generics.ListAPIView):
     """Get all coming soon content"""
     serializer_class = VideoContentSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return VideoContent.objects.filter(
             is_coming_soon=True,
@@ -462,7 +462,7 @@ class VideosByTagView(generics.ListAPIView):
     """Get videos filtered by tag"""
     serializer_class = VideoContentSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         tag_slug = self.kwargs.get('tag_slug')
         return VideoContent.objects.filter(
@@ -475,15 +475,15 @@ class SimilarContentView(generics.ListAPIView):
     """Get similar content based on tags and genre"""
     serializer_class = VideoContentSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         video_id = self.kwargs.get('pk')
-        
+
         try:
             current_video = VideoContent.objects.get(id=video_id)
         except VideoContent.DoesNotExist:
             return VideoContent.objects.none()
-        
+
         # Get videos with shared tags
         similar_videos = VideoContent.objects.filter(
             tags__in=current_video.tags.all(),
@@ -493,7 +493,7 @@ class SimilarContentView(generics.ListAPIView):
         ).annotate(
             shared_tags=Count('tags')
         ).order_by('-shared_tags', '-rating', '-view_count')
-        
+
         # If no tag matches, fall back to same genre
         if not similar_videos.exists():
             similar_videos = VideoContent.objects.filter(
@@ -502,5 +502,5 @@ class SimilarContentView(generics.ListAPIView):
             ).exclude(
                 id=current_video.id
             ).order_by('-rating', '-view_count')
-        
+
         return similar_videos.distinct()[:8]

@@ -18,13 +18,13 @@ import {
 
 const menuItems = [
   { href: '/admin-dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+  { href: '/admin-dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin-dashboard/videos', icon: Video, label: 'Videos' },
   { href: '/admin-dashboard/episodes', icon: Film, label: 'Episodes' },
-  { href: '/admin-dashboard/music', icon: Music, label: 'Music' },
-  { href: '/admin-dashboard/feedback', icon: MessageSquare, label: 'Feedback' },
-  { href: '/admin-dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin-dashboard/coming-soon', icon: Clock, label: 'Coming Soon' },
+  { href: '/admin-dashboard/music', icon: Music, label: 'Music' },
   { href: '/admin-dashboard/genres', icon: Tag, label: 'Genres' },
+  { href: '/admin-dashboard/feedback', icon: MessageSquare, label: 'Feedback' },
 ];
 
 export default function AdminSidebar() {
@@ -63,11 +63,10 @@ export default function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
-                    active
-                      ? 'bg-red-600 text-white font-medium'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                  }`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${active
+                    ? 'bg-red-600 text-white font-medium'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                    }`}
                 >
                   <Icon size={18} />
                   <span>{item.label}</span>

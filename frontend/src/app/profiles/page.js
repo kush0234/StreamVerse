@@ -209,8 +209,8 @@ export default function ProfilesPage() {
                     <div
                       key={plan.id}
                       className={`relative rounded-xl p-6 border-2 transition-all hover:scale-105 cursor-pointer ${isPopular
-                          ? 'border-blue-500 bg-blue-900/20 shadow-lg shadow-blue-500/20'
-                          : 'border-gray-700 bg-gray-900/50 hover:border-gray-500'
+                        ? 'border-blue-500 bg-blue-900/20 shadow-lg shadow-blue-500/20'
+                        : 'border-gray-700 bg-gray-900/50 hover:border-gray-500'
                         }`}
                       onClick={() => router.push('/plans')}
                     >
@@ -266,7 +266,7 @@ export default function ProfilesPage() {
 
               {/* Profile Image Upload */}
               <div className="mb-6">
-                <label className="block text-gray-400 text-sm mb-2">Profile Image</label>
+                <label className="block text-gray-400 text-sm mb-2">Profile Image <span className="text-gray-600">(optional)</span></label>
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex items-center justify-center flex-shrink-0">
                     {imagePreview ? (
@@ -286,7 +286,6 @@ export default function ProfilesPage() {
                       accept="image/*"
                       onChange={handleImageChange}
                       className="hidden"
-                      required
                     />
                   </label>
                 </div>

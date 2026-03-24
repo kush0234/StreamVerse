@@ -132,9 +132,19 @@ export default function Navbar() {
               <div className="relative group flex-shrink-0">
                 <div
                   onClick={handleAccountClick}
-                  className="w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer hover:ring-4 ring-white/30 transition-all hover:scale-110 shadow-lg"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden cursor-pointer hover:ring-4 ring-white/30 transition-all hover:scale-110 shadow-lg flex-shrink-0"
                 >
-                  {profile.name.charAt(0).toUpperCase()}
+                  {profile.profile_image_url ? (
+                    <img
+                      src={profile.profile_image_url}
+                      alt={profile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold">
+                      {profile.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Dropdown Menu */}

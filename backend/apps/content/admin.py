@@ -195,10 +195,12 @@ class VideoContentAdmin(admin.ModelAdmin):
 
 @admin.register(Episode)
 class EpisodeAdmin(admin.ModelAdmin):
-    list_display = ["series", "season_number", "episode_number", "title", "duration"]
-    list_filter = ["series", "season_number"]
+    list_display = ["series", "season_number", "episode_number", "title", "duration", "approval_status"]
+    list_filter = ["series", "season_number", "approval_status"]
+    list_editable = ["approval_status"]
     search_fields = ["title", "series__title"]
     ordering = ["series", "season_number", "episode_number"]
+    actions = ["approve_episodes", "reject_episodes"]
 
     fieldsets = (
         (
@@ -217,14 +219,30 @@ class EpisodeAdmin(admin.ModelAdmin):
             "Media Files",
             {
                 "fields": ("video_file", "thumbnail"),
-                "description": "📁 Upload episode video file and thumbnail. Duration will be auto-calculated from video.",
+                "description": "📁 Upload episode video file and thumbnail.",
             },
         ),
         ("Additional Info", {
             "fields": ("duration",),
-            "description": "Duration in seconds - auto-calculated from uploaded video file"
         }),
+        (
+            "Approval Workflow",
+            {
+                "fields": ("approval_status",),
+                "description": "Episode approval status - Only SuperAdmin can approve",
+            },
+        ),
     )
+
+    def approve_episodes(self, request, queryset):
+        updated = queryset.update(approval_status='APPROVED')
+        self.message_user(request, f"✅ Approved {updated} episodes", level='SUCCESS')
+    approve_episodes.short_description = "✅ Approve selected episodes"
+
+    def reject_episodes(self, request, queryset):
+        updated = queryset.update(approval_status='REJECTED')
+        self.message_user(request, f"❌ Rejected {updated} episodes", level='WARNING')
+    reject_episodes.short_description = "❌ Reject selected episodes"
 
 
 @admin.register(Music)

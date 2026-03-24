@@ -21,6 +21,73 @@ export default function MusicPlayer({ musicId, onClose }) {
     }
   }, [musicId]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          audio.currentTime = Math.max(0, audio.currentTime - 10);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setVolume(prev => {
+            const next = Math.min(100, prev + 10);
+            audio.volume = next / 100;
+            return next;
+          });
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setVolume(prev => {
+            const next = Math.max(0, prev - 10);
+            audio.volume = next / 100;
+            return next;
+          });
+          break;
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          if (audio.volume > 0) {
+            audio.volume = 0;
+            setVolume(0);
+          } else {
+            audio.volume = 1;
+            setVolume(100);
+          }
+          break;
+        case 'l':
+        case 'L':
+          e.preventDefault();
+          toggleLike();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          handleClose();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [music, isPlaying, isLiked]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -101,27 +168,37 @@ export default function MusicPlayer({ musicId, onClose }) {
     setLoading(true);
 
     try {
-      const musicData = await api.getMusicDetail(token, musicId);
+      // Fetch music data and watchlist in parallel
+      const profile = profileStr ? JSON.parse(profileStr) : null;
+
+      const [musicData] = await Promise.all([
+        api.getMusicDetail(token, musicId),
+      ]);
+
       setMusic(musicData);
-      
-      // Set duration from backend data if available
+
       if (musicData.duration) {
         setDuration(musicData.duration);
       }
-      
-      // Check if music is in watchlist
-      if (profileStr) {
-        try {
-          const profile = JSON.parse(profileStr);
-          const watchlistData = await api.getWatchlist(token, profile.id);
-          const isInList = watchlistData.some(item => item.music?.id === parseInt(musicId));
-          setIsLiked(isInList);
-        } catch (watchlistErr) {
-          console.error('Failed to check watchlist status', watchlistErr);
-          // Continue without watchlist status
-        }
+
+      // Start audio loading immediately after we have the URL
+      if (audioRef.current && musicData.audio_url) {
+        audioRef.current.src = musicData.audio_url;
+        audioRef.current.load();
       }
-      
+
+      setLoading(false);
+
+      // Check watchlist in background — don't block playback
+      if (profile) {
+        api.getWatchlist(token, profile.id)
+          .then(watchlistData => {
+            const isInList = watchlistData.some(item => item.music?.id === parseInt(musicId));
+            setIsLiked(isInList);
+          })
+          .catch(() => { });
+      }
+
       setIsPlaying(true);
       setTimeout(() => {
         audioRef.current?.play().catch(err => {
@@ -129,9 +206,9 @@ export default function MusicPlayer({ musicId, onClose }) {
           setIsPlaying(false);
         });
       }, 100);
+
     } catch (err) {
       console.error('Failed to load music', err);
-    } finally {
       setLoading(false);
     }
   };
@@ -276,10 +353,10 @@ export default function MusicPlayer({ musicId, onClose }) {
                 <div className={`absolute inset-0 bg-blue-500/20 blur-3xl rounded-full transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}></div>
                 <div className="relative w-56 h-56 mx-auto rounded-2xl overflow-hidden shadow-2xl group">
                   {music.thumbnail ? (
-                    <img 
-                      src={music.thumbnail} 
-                      alt={music.title} 
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                    <img
+                      src={music.thumbnail}
+                      alt={music.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 flex items-center justify-center">
@@ -315,7 +392,7 @@ export default function MusicPlayer({ musicId, onClose }) {
                     handleSeek({ target: { value: percent } });
                   }}
                 >
-                  <div 
+                  <div
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 rounded-full transition-all shadow-lg"
                     style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
                   >

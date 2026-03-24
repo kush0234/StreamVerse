@@ -365,6 +365,11 @@ function BrowseContent() {
           {/* Enhanced Recommendations */}
           {!type && !selectedTag && !selectedGenre && useEnhancedRecommendations && (
             <>
+              {/* Coming Soon - First */}
+              {comingSoon.length > 0 && (
+                <ComingSoonSection items={comingSoon} />
+              )}
+
               {/* Continue Watching - Enhanced */}
               {recommendations.continue_watching.length > 0 && (
                 <RecommendationRow
@@ -434,11 +439,6 @@ function BrowseContent() {
                 <ContentRow title="Music" items={music} type="music" />
               )}
             </>
-          )}
-
-          {/* Coming Soon - Always show if available and not filtering */}
-          {!type && !selectedTag && !selectedGenre && comingSoon.length > 0 && useEnhancedRecommendations && (
-            <ComingSoonSection items={comingSoon} />
           )}
 
           {/* No content message */}
