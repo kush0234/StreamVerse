@@ -101,7 +101,7 @@ WSGI_APPLICATION = "streamverse.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.parse(
-        os.environ.get("postgresql://streamverse_db_s6y3_user:V37PhkZgt7VPCeN5xRl1zemKks3TNbib@dpg-d72107dm5p6s73dd6m8g-a.oregon-postgres.render.com/streamverse_db_s6y3")
+        os.environ.get("DATABASE_URL")
     )
 }
 
