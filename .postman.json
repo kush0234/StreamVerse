@@ -1,0 +1,1043 @@
+{
+    "info": {
+        "name": "Streamverse API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000"
+        },
+        {
+            "key": "access_token",
+            "value": ""
+        },
+        {
+            "key": "refresh_token",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/auth/register/",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"password\": \"TestPass123!\", \"password2\": \"TestPass123!\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var json = pm.response.json();",
+                                    "if (json.access) { pm.collectionVariables.set('access_token', json.access); }",
+                                    "if (json.refresh) { pm.collectionVariables.set('refresh_token', json.refresh); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/auth/login/",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"username\": \"testuser\", \"password\": \"TestPass123!\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Refresh Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "applicatio
+sword","request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/change-password/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"old_password\": \"TestPass123!\", \"new_password\": \"NewPass456!\", \"new_password2\": \"NewPass456!\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Password Reset Request",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/password-reset/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"email\": \"test@example.com\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Password Reset Confirm",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/password-reset-confirm/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"token\": \"<reset-token>\", \"new_password\": \"NewPass456!\", \"new_password2\": \"NewPass456!\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Delete Account",
+                                "request": {
+                                    "method": "DELETE",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/delete-account/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Profiles",
+                        "item": [
+                            {
+                                "name": "List / Create Profiles",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/profiles/"
+                                }
+                            },
+                            {
+                                "name": "Create Profile",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/profiles/",
+                                    "body": {
+                                        "mode": "formdata",
+                                        "formdata": [
+                                            {
+                                                "key": "name",
+                                                "value": "My Profile",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "avatar",
+                                                "type": "file",
+                                                "src": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Update Profile",
+                                "request": {
+                                    "method": "PATCH",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/profiles/1/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"name\": \"Updated Name\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Delete Profile",
+                                "request": {
+                                    "method": "DELETE",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/profiles/1/delete/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Subscriptions",
+                        "item": [
+                            {
+                                "name": "List Plans",
+                                "request": {
+                                    "method": "GET",
+                                    "url": "{{base_url}}/api/auth/subscription/plans/"
+                                }
+                            },
+                            {
+                                "name": "Get My Subscription",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/subscription/"
+                                }
+                            },
+                            {
+                                "name": "Create Subscription",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/subscription/create/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"plan_id\": 1, \"billing_cycle\": \"MONTHLY\", \"payment_method\": \"CARD\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Cancel Subscription",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/subscription/cancel/"
+                                }
+                            },
+                            {
+                                "name": "Change Subscription Plan",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/subscription/change-plan/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"plan_id\": 2, \"billing_cycle\": \"YEARLY\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Payment History",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/payments/history/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Payments (Razorpay)",
+                        "item": [
+                            {
+                                "name": "Get Razorpay Key",
+                                "request": {
+                                    "method": "GET",
+                                    "url": "{{base_url}}/api/auth/payment/razorpay-key/"
+                                }
+                            },
+                            {
+                                "name": "Initiate Payment",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/payment/initiate/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"plan_id\": 1, \"billing_cycle\": \"MONTHLY\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Verify Payment",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/payment/verify/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"razorpay_order_id\": \"order_xxx\", \"razorpay_payment_id\": \"pay_xxx\", \"razorpay_signature\": \"sig_xxx\", \"plan_id\": 1, \"billing_cycle\": \"MONTHLY\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Razorpay Webhook",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        },
+                                        {
+                                            "key": "X-Razorpay-Signature",
+                                            "value": "<webhook-signature>"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/auth/payment/webhook/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"event\": \"payment.captured\", \"payload\": {\"payment\": {\"entity\": {\"id\": \"pay_xxx\", \"order_id\": \"order_xxx\"}}}}"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Videos",
+                        "item": [
+                            {
+                                "name": "List Videos",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": {
+                                        "raw": "{{base_url}}/api/user/videos/",
+                                        "query": [
+                                            {
+                                                "key": "search",
+                                                "value": "",
+                                                "disabled": true
+                                            },
+                                            {
+                                                "key": "genre",
+                                                "value": "",
+                                                "disabled": true
+                                            },
+                                            {
+                                                "key": "content_type",
+                                                "value": "MOVIE",
+                                                "disabled": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Get Video Detail",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/videos/1/"
+                                }
+                            },
+                            {
+                                "name": "Trending Videos",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/videos/trending/"
+                                }
+                            },
+                            {
+                                "name": "Coming Soon",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/videos/coming-soon/"
+                                }
+                            },
+                            {
+                                "name": "Videos by Tag",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/videos/by-tag/action/"
+                                }
+                            },
+                            {
+                                "name": "Similar Content",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/videos/1/similar/"
+                                }
+                            },
+                            {
+                                "name": "List Episodes",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/videos/1/episodes/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Music",
+                        "item": [
+                            {
+                                "name": "List Music",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/music/"
+                                }
+                            },
+                            {
+                                "name": "Get Music Detail",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/music/1/"
+                                }
+                            },
+                            {
+                                "name": "Trending Music",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/music/trending/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Artists & Albums",
+                        "item": [
+                            {
+                                "name": "List Artists",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/artists/"
+                                }
+                            },
+                            {
+                                "name": "Get Artist Detail",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/artists/Artist%20Name/"
+                                }
+                            },
+                            {
+                                "name": "List Albums",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/albums/"
+                                }
+                            },
+                            {
+                                "name": "Get Album Detail",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/albums/Artist%20Name/Album%20Title/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Watch Progress & Watchlist",
+                        "item": [
+                            {
+                                "name": "Save Watch Progress",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/watch-progress/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"video_id\": 1, \"progress\": 120, \"duration\": 3600}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Continue Watching",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/continue-watching/"
+                                }
+                            },
+                            {
+                                "name": "Recently Watched",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recently-watched/"
+                                }
+                            },
+                            {
+                                "name": "Get Watchlist",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/watchlist/"
+                                }
+                            },
+                            {
+                                "name": "Add to Watchlist",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/watchlist/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"video_id\": 1}"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Genres & Tags",
+                        "item": [
+                            {
+                                "name": "List Genres",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/genres/"
+                                }
+                            },
+                            {
+                                "name": "List Tags",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/tags/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Recommendations",
+                        "item": [
+                            {
+                                "name": "Home Recommendations",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/home/"
+                                }
+                            },
+                            {
+                                "name": "Trending Videos (Rec)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/videos/trending/"
+                                }
+                            },
+                            {
+                                "name": "Trending Music (Rec)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/music/trending/"
+                                }
+                            },
+                            {
+                                "name": "Top Video Picks",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/videos/top-picks/"
+                                }
+                            },
+                            {
+                                "name": "Top Music Picks",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/music/top-picks/"
+                                }
+                            },
+                            {
+                                "name": "Continue Watching (Rec)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/continue-watching/"
+                                }
+                            },
+                            {
+                                "name": "Similar Content (Rec)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/similar/1/"
+                                }
+                            },
+                            {
+                                "name": "Record Interaction",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/user/recommendations/record-interaction/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"content_id\": 1, \"interaction_type\": \"VIEW\"}"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Feedback",
+                        "item": [
+                            {
+                                "name": "List Feedback Categories",
+                                "request": {
+                                    "method": "GET",
+                                    "url": "{{base_url}}/api/feedback/categories/"
+                                }
+                            },
+                            {
+                                "name": "List Feedback",
+                                "request": {
+                                    "method": "GET",
+                                    "url": {
+                                        "raw": "{{base_url}}/api/feedback/",
+                                        "query": [
+                                            {
+                                                "key": "status",
+                                                "value": "OPEN",
+                                                "disabled": true
+                                            },
+                                            {
+                                                "key": "category",
+                                                "value": "bug",
+                                                "disabled": true
+                                            },
+                                            {
+                                                "key": "sort_by",
+                                                "value": "popular",
+                                                "disabled": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Create Feedback",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/feedback/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"title\": \"Feature request\", \"description\": \"Please add dark mode\", \"category\": 1, \"is_public\": true}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Get Feedback Detail",
+                                "request": {
+                                    "method": "GET",
+                                    "url": "{{base_url}}/api/feedback/1/"
+                                }
+                            },
+                            {
+                                "name": "Vote on Feedback",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/feedback/1/vote/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"vote_type\": \"UP\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "Comment on Feedback",
+                                "request": {
+                                    "method": "POST",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        },
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/feedback/1/comment/",
+                                    "body": {
+                                        "mode": "raw",
+                                        "raw": "{\"comment\": \"Great idea!\"}"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "My Feedback",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/feedback/my_feedback/"
+                                }
+                            },
+                            {
+                                "name": "Feedback Stats",
+                                "request": {
+                                    "method": "GET",
+                                    "url": "{{base_url}}/api/feedback/stats/"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Admin Dashboard",
+                        "item": [
+                            {
+                                "name": "Dashboard Overview",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/admin-dashboard/overview/"
+                                }
+                            },
+                            {
+                                "name": "List Videos (Admin)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/admin-dashboard/videos/"
+                                }
+                            },
+                            {
+                                "name": "List Episodes (Admin)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/admin-dashboard/episodes/"
+                                }
+                            },
+                            {
+                                "name": "List Music (Admin)",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/admin-dashboard/music/"
+                                }
+                            },
+                            {
+                                "name": "Analytics",
+                                "request": {
+                                    "method": "GET",
+                                    "header": [
+                                        {
+                                            "key": "Authorization",
+                                            "value": "Bearer {{access_token}}"
+                                        }
+                                    ],
+                                    "url": "{{base_url}}/api/admin-dashboard/analytics/"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
