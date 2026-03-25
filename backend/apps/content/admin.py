@@ -13,25 +13,12 @@ class EpisodeInline(admin.TabularInline):
 class VideoContentAdmin(admin.ModelAdmin):
 
     list_display = [
-        "id",
-        "title",
-        "content_type",
-        "genre",
-        "is_public_domain",
-        "is_coming_soon",
-        "approval_status",
-        "rating",
-        "release_date",
-        "created_at",
+        "id", "title", "content_type", "genre",
+        "is_coming_soon", "approval_status", "rating", "release_date", "created_at",
     ]
 
     list_filter = [
-        "content_type",
-        "genre",
-        "is_public_domain",
-        "is_coming_soon",
-        "approval_status",
-        "release_date",
+        "content_type", "genre", "is_coming_soon", "approval_status", "release_date",
     ]
 
     # Make approval status editable in list view
@@ -44,90 +31,56 @@ class VideoContentAdmin(admin.ModelAdmin):
     filter_horizontal = ["tags"]
     actions = ["generate_tags_action", "approve_content", "reject_content", "mark_as_coming_soon"]
 
-    class Media:
-        js = ('admin/js/video_content_admin.js',)
-
     fieldsets = (
         (
-            "Step 1: Basic Information",
+            "Basic Information",
             {
                 "fields": (
-                    "title",
-                    "description",
-                    "content_type",
-                    "genre",
-                    "release_date",
-                    "rating",
+                    "title", "description", "content_type",
+                    "genre", "release_date", "rating",
                 )
             },
         ),
         (
-            "Step 2: Choose Content Type",
+            "Thumbnail",
             {
-                "fields": (
-                    "is_public_domain",
-                ),
-                "description": "✅ Check 'Public Domain' for LOCAL video uploads | ❌ Uncheck for YouTube trailers only",
-                "classes": ("wide",),
+                "fields": ("thumbnail",),
+                "description": "🖼️ Upload thumbnail image",
             },
         ),
         (
-            "Step 3: Thumbnail (Required for all content)",
+            "Video (Cloudinary Upload)",
             {
-                "fields": (
-                    "thumbnail",
-                ),
-                "description": "🖼️ Upload thumbnail image (required for both local and YouTube content)",
+                "fields": ("video_url", "duration"),
+                "description": "☁️ Upload video file — stored on Cloudinary. Leave empty if using YouTube trailer.",
             },
         ),
         (
-            "Step 4A: Local Video Upload (Only if Public Domain is checked)",
+            "YouTube Trailer",
             {
-                "fields": (
-                    "video_file",
-                    "duration",
-                ),
-                "description": "📁 Upload your local video file here. Duration will be auto-calculated from the video file.",
+                "fields": ("youtube_trailer_url",),
+                "description": "🎬 YouTube embed URL — use instead of Cloudinary upload if content is YouTube-only.",
                 "classes": ("collapse",),
             },
         ),
         (
-            "Step 4B: YouTube Trailer (Only if Public Domain is unchecked)",
+            "Coming Soon",
             {
-                "fields": (
-                    "youtube_trailer_url",
-                ),
-                "description": "🎬 Add YouTube embed URL for movie trailers. Duration is not needed - YouTube handles playback timing.",
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Coming Soon Feature",
-            {
-                "fields": (
-                    "is_coming_soon",
-                    "expected_release_date",
-                ),
-                "description": "Mark content as 'Coming Soon' - video upload becomes optional",
+                "fields": ("is_coming_soon", "expected_release_date"),
                 "classes": ("collapse",),
             },
         ),
         (
             "Approval Workflow",
             {
-                "fields": (
-                    "approval_status",
-                    "submitted_for_approval_at",
-                ),
-                "description": "Content approval status - Only SuperAdmin can approve",
+                "fields": ("approval_status", "submitted_for_approval_at"),
                 "classes": ("collapse",),
             },
         ),
         (
-            "Tags & Categorization",
+            "Tags",
             {
                 "fields": ("tags",),
-                "description": "Tags are auto-generated but can be manually edited",
                 "classes": ("collapse",),
             },
         ),
@@ -140,28 +93,23 @@ class VideoContentAdmin(admin.ModelAdmin):
         return []
 
     def save_model(self, request, obj, form, change):
-        """Auto-generate tags when saving content and validate fields"""
+        """Auto-generate tags when saving content"""
+        # Handle video file upload with correct resource_type
+        if 'video_url' in request.FILES:
+            import cloudinary.uploader
+            result = cloudinary.uploader.upload(
+                request.FILES['video_url'],
+                resource_type='video',
+                folder='videos',
+            )
+            obj.video_url = result['public_id']
 
-        # Validation logic
-        if obj.is_public_domain:
-            # For local uploads, clear YouTube URL
-            obj.youtube_trailer_url = ""
-            if not obj.is_coming_soon and not obj.video_file:
-                from django.contrib import messages
-                messages.warning(request, "⚠️ Public domain content should have a video file uploaded.")
-        else:
-            # For YouTube trailers, clear local file
-            if obj.video_file:
-                obj.video_file = None
-            if obj.duration:
-                obj.duration = None
-            if not obj.is_coming_soon and not obj.youtube_trailer_url:
-                from django.contrib import messages
-                messages.warning(request, "⚠️ Non-public domain content should have a YouTube trailer URL.")
+        if obj.content_type == 'MOVIE' and not obj.is_coming_soon and not obj.video_url and not obj.youtube_trailer_url:
+            from django.contrib import messages
+            messages.warning(request, "⚠️ Movie has no video. Upload a Cloudinary video or add a YouTube trailer URL.")
 
         super().save_model(request, obj, form, change)
 
-        # Generate tags if none exist
         if not obj.tags.exists():
             AutoTagger.apply_tags_to_content(obj)
 
@@ -218,8 +166,8 @@ class EpisodeAdmin(admin.ModelAdmin):
         (
             "Media Files",
             {
-                "fields": ("video_file", "thumbnail"),
-                "description": "📁 Upload episode video file and thumbnail.",
+                "fields": ("video_url", "thumbnail"),
+                "description": "☁️ Upload episode video and thumbnail — stored on Cloudinary.",
             },
         ),
         ("Additional Info", {
@@ -233,6 +181,18 @@ class EpisodeAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def save_model(self, request, obj, form, change):
+        """Handle episode video upload with correct resource_type"""
+        if 'video_url' in request.FILES:
+            import cloudinary.uploader
+            result = cloudinary.uploader.upload(
+                request.FILES['video_url'],
+                resource_type='video',
+                folder='episodes',
+            )
+            obj.video_url = result['public_id']
+        super().save_model(request, obj, form, change)
 
     def approve_episodes(self, request, queryset):
         updated = queryset.update(approval_status='APPROVED')

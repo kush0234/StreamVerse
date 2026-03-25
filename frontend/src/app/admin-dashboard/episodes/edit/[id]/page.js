@@ -6,12 +6,16 @@ import { adminApi } from '@/lib/adminApi';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import Breadcrumb from '@/components/admin/Breadcrumb';
+import { patchWithProgress } from '@/lib/uploadWithProgress';
+import UploadProgress from '@/components/admin/UploadProgress';
 
 export default function EditEpisode() {
   const router = useRouter();
   const params = useParams();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -27,10 +31,7 @@ export default function EditEpisode() {
     episode_number: '',
     duration: '',
   });
-  const [files, setFiles] = useState({
-    video_file: null,
-    thumbnail_file: null,
-  });
+  const [files, setFiles] = useState({ video_url: null, thumbnail_file: null });
 
   const steps = [
     { id: 1, title: 'Series & Basic Info', description: 'Select series, title, and description' },
@@ -132,7 +133,7 @@ export default function EditEpisode() {
       setFiles(prev => ({ ...prev, [name]: selectedFiles[0] }));
 
       // Auto-calculate duration for any new video file upload
-      if (name === 'video_file') {
+      if (name === 'video_url') {
         setCalculatingDuration(true);
         const file = selectedFiles[0];
         const video = document.createElement('video');
@@ -198,13 +199,17 @@ export default function EditEpisode() {
 
     setLoading(true);
 
+    const hasVideoFile = !!files.video_url;
+    if (hasVideoFile) {
+      setUploadProgress(0);
+      setIsProcessing(false);
+    }
+
     try {
       const formDataToSend = new FormData();
 
-      // Append text fields
       Object.keys(formData).forEach(key => {
         if (formData[key]) {
-          // Convert duration from minutes to seconds for backend
           if (key === 'duration') {
             formDataToSend.append(key, formData[key] * 60);
           } else {
@@ -213,19 +218,32 @@ export default function EditEpisode() {
         }
       });
 
-      // Append new files if selected
-      if (files.video_file) {
-        formDataToSend.append('video_file', files.video_file);
-      }
-      if (files.thumbnail_file) {
-        formDataToSend.append('thumbnail', files.thumbnail_file);
+      if (files.video_url) formDataToSend.append('video_url', files.video_url);
+      if (files.thumbnail_file) formDataToSend.append('thumbnail', files.thumbnail_file);
+
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const token = localStorage.getItem('access_token');
+
+      if (hasVideoFile) {
+        await patchWithProgress(
+          `${API_BASE_URL}/admin-dashboard/episodes/${params.id}/`,
+          formDataToSend,
+          token,
+          (percent) => {
+            setUploadProgress(percent);
+            if (percent === 100) setIsProcessing(true);
+          }
+        );
+      } else {
+        await adminApi.updateEpisodeWithFiles(params.id, formDataToSend);
       }
 
-      await adminApi.updateEpisodeWithFiles(params.id, formDataToSend);
       toast.success('Episode updated successfully!');
       router.push('/admin-dashboard/episodes');
     } catch (err) {
       toast.error(err.message || 'Failed to update episode');
+      setUploadProgress(null);
+      setIsProcessing(false);
     } finally {
       setLoading(false);
     }
@@ -349,23 +367,23 @@ export default function EditEpisode() {
             <div className="space-y-4">
               {/* Video File Upload */}
               <div>
-                <label className="block text-white mb-2">Video File</label>
+                <label className="block text-white mb-2">☁️ Upload Video to Cloudinary</label>
                 {currentFiles.video_url && (
                   <div className="mb-3 p-3 bg-gray-700/50 rounded border border-gray-600">
-                    <p className="text-gray-300 text-sm font-medium mb-1">Current file:</p>
+                    <p className="text-gray-300 text-sm font-medium mb-1">Current video:</p>
                     <p className="text-green-400 text-sm truncate">{currentFiles.video_url.split('/').pop()}</p>
                   </div>
                 )}
                 <input
                   type="file"
-                  name="video_file"
+                  name="video_url"
                   onChange={handleFileChange}
                   accept="video/*"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-red-600 file:text-white file:cursor-pointer hover:file:bg-red-700"
                 />
-                {files.video_file && (
+                {files.video_url && (
                   <p className="text-green-400 text-sm mt-1">
-                    New file selected: {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
+                    New file selected: {files.video_url.name} ({(files.video_url.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
                 <p className="text-gray-500 text-xs mt-1">
@@ -555,7 +573,7 @@ export default function EditEpisode() {
                 <div className="mt-4">
                   <h4 className="text-gray-300 font-medium mb-2">File Changes</h4>
                   <p className="text-sm text-gray-400 mb-1">
-                    <strong>Video:</strong> {files.video_file ? `New file: ${files.video_file.name}` : 'No changes'}
+                    <strong>Video:</strong> {files.video_url ? `New file: ${files.video_url.name}` : 'No changes'}
                   </p>
                   <p className="text-sm text-gray-400">
                     <strong>Thumbnail:</strong> {files.thumbnail_file ? `New file: ${files.thumbnail_file.name}` : 'No changes'}
@@ -577,6 +595,8 @@ export default function EditEpisode() {
                   </div>
                 </div>
               </div>
+
+              <UploadProgress progress={uploadProgress} isProcessing={isProcessing} />
             </div>
           )}
 

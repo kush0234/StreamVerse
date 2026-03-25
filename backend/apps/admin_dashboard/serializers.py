@@ -13,18 +13,19 @@ class DashboardStatsSerializer(serializers.Serializer):
 
 
 class VideoManagementSerializer(serializers.ModelSerializer):
-    """Serializer for video management with hybrid storage support"""
+    """Serializer for video management"""
     episodes_count = serializers.SerializerMethodField(read_only=True)
     thumbnail_url = serializers.SerializerMethodField(read_only=True)
-    video_url = serializers.SerializerMethodField(read_only=True)
-    trailer_url = serializers.SerializerMethodField(read_only=True)
+    video_url_display = serializers.SerializerMethodField(read_only=True)
+    trailer_url_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = VideoContent
         fields = '__all__'
         extra_kwargs = {
-            'thumbnail': {'write_only': False, 'required': False},
-            'video_file': {'write_only': False, 'required': False},
+            'thumbnail': {'required': False},
+            'video_url': {'required': False, 'read_only': False, 'allow_null': True},
+            'trailer_url': {'required': False},
         }
 
     def get_episodes_count(self, obj):
@@ -40,20 +41,24 @@ class VideoManagementSerializer(serializers.ModelSerializer):
                 return None
         return None
 
-    def get_video_url(self, obj):
-        """Return appropriate video URL based on storage type"""
-        if obj.is_public_domain and obj.video_file:
-            # Local file
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.video_file.url)
-            return obj.video_file.url
-        elif not obj.is_public_domain and obj.youtube_trailer_url:
-            # YouTube embed
+    def get_video_url_display(self, obj):
+        if obj.video_url:
+            try:
+                import cloudinary
+                public_id = str(obj.video_url)
+                url, _ = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    resource_type='video',
+                    secure=True
+                )
+                return url
+            except:
+                return None
+        elif obj.youtube_trailer_url:
             return obj.youtube_trailer_url
         return None
 
-    def get_trailer_url(self, obj):
+    def get_trailer_url_display(self, obj):
         if obj.trailer_url:
             try:
                 return obj.trailer_url.url
@@ -62,39 +67,37 @@ class VideoManagementSerializer(serializers.ModelSerializer):
         return None
 
     def to_representation(self, instance):
-        """Add thumbnail_url to response"""
         data = super().to_representation(instance)
-        # Add the URL version for frontend
         data['thumbnail'] = self.get_thumbnail_url(instance)
-        data['video_url'] = self.get_video_url(instance)
+        data['video_url'] = self.get_video_url_display(instance)
         return data
 
 
 class EpisodeManagementSerializer(serializers.ModelSerializer):
-    """Serializer for episode management with hybrid storage support"""
+    """Serializer for episode management"""
     series_title = serializers.CharField(source='series.title', read_only=True)
-    video_url = serializers.SerializerMethodField()
-    thumbnail_url = serializers.SerializerMethodField()
+    video_url_display = serializers.SerializerMethodField(read_only=True)
+    thumbnail_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Episode
         fields = '__all__'
         extra_kwargs = {
-            'thumbnail': {'write_only': False, 'required': False},
+            'thumbnail': {'required': False},
+            'video_url': {'required': False, 'read_only': False, 'allow_null': True},
         }
 
-    def get_video_url(self, obj):
-        """Return video URL from either local or Cloudinary"""
-        if obj.video_file:
-            # Local file
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.video_file.url)
-            return obj.video_file.url
-        elif obj.video_url:
-            # Cloudinary
+    def get_video_url_display(self, obj):
+        if obj.video_url:
             try:
-                return obj.video_url.url
+                import cloudinary
+                public_id = str(obj.video_url)
+                url, _ = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    resource_type='video',
+                    secure=True
+                )
+                return url
             except:
                 return None
         return None
@@ -108,9 +111,9 @@ class EpisodeManagementSerializer(serializers.ModelSerializer):
         return None
 
     def to_representation(self, instance):
-        """Add thumbnail URL to response"""
         data = super().to_representation(instance)
         data['thumbnail'] = self.get_thumbnail_url(instance)
+        data['video_url'] = self.get_video_url_display(instance)
         return data
 
 

@@ -61,14 +61,22 @@ class VideoManagementViewSet(viewsets.ModelViewSet):
     serializer_class = VideoManagementSerializer
 
     def perform_create(self, serializer):
-        # Set approval status to PENDING for admin-created content
-        video = serializer.save(approval_status='PENDING')
+        import cloudinary.uploader
+        video_file = self.request.FILES.get('video_url')
+        extra = {'video_url': None}  # prevent serializer from processing the file
+        if video_file:
+            result = cloudinary.uploader.upload(
+                video_file,
+                resource_type='video',
+                folder='videos',
+            )
+            extra['video_url'] = result['public_id']
 
-        # Auto-generate tags
+        video = serializer.save(approval_status='PENDING', **extra)
+
         from apps.content.utils.auto_tagger import AutoTagger
         AutoTagger.apply_tags_to_content(video)
 
-        # Log activity
         ActivityLog.log_activity(
             activity_type='VIDEO_UPLOADED',
             user=self.request.user,
@@ -76,6 +84,22 @@ class VideoManagementViewSet(viewsets.ModelViewSet):
             metadata={'video_id': video.id, 'content_type': video.content_type, 'approval_status': 'PENDING'},
             request=self.request
         )
+
+    def perform_update(self, serializer):
+        import cloudinary.uploader
+        video_file = self.request.FILES.get('video_url')
+        extra = {}
+        if video_file:
+            result = cloudinary.uploader.upload(
+                video_file,
+                resource_type='video',
+                folder='videos',
+            )
+            extra['video_url'] = result['public_id']
+        else:
+            # keep existing value — don't let serializer overwrite with empty
+            extra['video_url'] = serializer.instance.video_url
+        serializer.save(**extra)
 
     def perform_destroy(self, instance):
         # Log activity before deletion
@@ -104,8 +128,19 @@ class EpisodeManagementViewSet(viewsets.ModelViewSet):
     serializer_class = EpisodeManagementSerializer
 
     def perform_create(self, serializer):
-        episode = serializer.save(approval_status='PENDING')
-        # Log activity
+        import cloudinary.uploader
+        video_file = self.request.FILES.get('video_url')
+        extra = {'video_url': None}  # prevent serializer from processing the file
+        if video_file:
+            result = cloudinary.uploader.upload(
+                video_file,
+                resource_type='video',
+                folder='episodes',
+            )
+            extra['video_url'] = result['public_id']
+
+        episode = serializer.save(approval_status='PENDING', **extra)
+
         ActivityLog.log_activity(
             activity_type='EPISODE_ADDED',
             user=self.request.user,
@@ -119,6 +154,21 @@ class EpisodeManagementViewSet(viewsets.ModelViewSet):
             },
             request=self.request
         )
+
+    def perform_update(self, serializer):
+        import cloudinary.uploader
+        video_file = self.request.FILES.get('video_url')
+        extra = {}
+        if video_file:
+            result = cloudinary.uploader.upload(
+                video_file,
+                resource_type='video',
+                folder='episodes',
+            )
+            extra['video_url'] = result['public_id']
+        else:
+            extra['video_url'] = serializer.instance.video_url
+        serializer.save(**extra)
 
     def perform_destroy(self, instance):
         # Log activity before deletion

@@ -319,11 +319,11 @@ export default function DetailPage() {
                           Close ✕
                         </button>
                       </div>
-                      {currentEpisode.video_file ? (
+                      {currentEpisode.video_url ? (
                         <VideoPlayer
                           videoData={{
                             is_public_domain: true,
-                            video_url: currentEpisode.video_file,
+                            video_url: currentEpisode.video_url,
                             title: `${content.title} - S${currentEpisode.season_number}E${currentEpisode.episode_number}: ${currentEpisode.title}`,
                             thumbnail: currentEpisode.thumbnail,
                             id: currentEpisode.id,
@@ -403,11 +403,11 @@ export default function DetailPage() {
                 /* Movie - Inline Video Player */
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Watch Now</h2>
-                  {content.video_file ? (
+                  {content.video_url ? (
                     <VideoPlayer
                       videoData={{
-                        is_public_domain: content.is_public_domain || true,
-                        video_url: content.video_file,
+                        is_public_domain: true,
+                        video_url: content.video_url,
                         title: content.title,
                         thumbnail: content.thumbnail,
                         id: content.id,
@@ -627,11 +627,11 @@ export default function DetailPage() {
           <div className="flex-1 flex items-center justify-center p-4">
             {currentEpisode ? (
               /* Episode Player */
-              currentEpisode.video_file ? (
+              currentEpisode.video_url ? (
                 <VideoPlayer
                   videoData={{
                     is_public_domain: true, // Assuming episodes are public domain
-                    video_url: currentEpisode.video_file,
+                    video_url: currentEpisode.video_url,
                     title: `${content.title} - S${currentEpisode.season_number}E${currentEpisode.episode_number}: ${currentEpisode.title}`,
                     thumbnail: currentEpisode.thumbnail,
                     id: currentEpisode.id
@@ -649,11 +649,11 @@ export default function DetailPage() {
               )
             ) : (
               /* Movie Player */
-              content.video_file ? (
+              content.video_url ? (
                 <VideoPlayer
                   videoData={{
                     is_public_domain: content.is_public_domain || true,
-                    video_url: content.video_file,
+                    video_url: content.video_url,
                     title: content.title,
                     thumbnail: content.thumbnail,
                     id: content.id

@@ -116,7 +116,7 @@ export default function VideosManagement() {
                   <SortableHeader label="Title" sortKey="title" {...sharedHeaderProps} />
                   <SortableHeader label="Type" sortKey="content_type" {...sharedHeaderProps} />
                   <SortableHeader label="Status" sortKey="approval_status" {...sharedHeaderProps} />
-                  <SortableHeader label="Storage" sortKey="is_public_domain" {...sharedHeaderProps} />
+                  <SortableHeader label="Storage" sortKey="video_url" {...sharedHeaderProps} />
                   <SortableHeader label="Genre" sortKey="genre" {...sharedHeaderProps} />
                   <SortableHeader label="Views" sortKey="view_count" {...sharedHeaderProps} />
                   <SortableHeader label="Rating" sortKey="rating" {...sharedHeaderProps} />
@@ -140,8 +140,8 @@ export default function VideosManagement() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs text-white ${video.is_public_domain ? 'bg-green-700' : 'bg-red-700'}`}>
-                        {video.is_public_domain ? 'Local' : 'YouTube'}
+                      <span className={`px-2 py-0.5 rounded text-xs text-white ${video.youtube_trailer_url ? 'bg-red-700' : 'bg-blue-700'}`}>
+                        {video.youtube_trailer_url ? 'YouTube' : 'Cloudinary'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400">{video.genre || '—'}</td>

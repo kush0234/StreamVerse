@@ -95,7 +95,7 @@ export default function VideoPlayer({ videoData, onTimeUpdate: onTimeUpdateProp,
     const onKey = (e) => {
       if (!videoRef.current) return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      const keys = ['Space','KeyK','KeyF','KeyM','KeyP','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+      const keys = ['Space', 'KeyK', 'KeyF', 'KeyM', 'KeyP', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
       if (keys.includes(e.code)) e.preventDefault();
       switch (e.code) {
         case 'Space': case 'KeyK': togglePlay(); break;
@@ -212,7 +212,7 @@ export default function VideoPlayer({ videoData, onTimeUpdate: onTimeUpdateProp,
   const volumeVal = isMuted ? 0 : volume;
 
   // YouTube embed
-  if (!videoData.is_public_domain && videoData.video_url) {
+  if (videoData.video_url && (videoData.video_url.includes('youtube.com') || videoData.video_url.includes('youtu.be'))) {
     return (
       <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
         <iframe
@@ -226,8 +226,8 @@ export default function VideoPlayer({ videoData, onTimeUpdate: onTimeUpdateProp,
     );
   }
 
-  // Local video player
-  if (videoData.is_public_domain && videoData.video_url) {
+  // Cloudinary video player
+  if (videoData.video_url) {
     return (
       <div
         ref={containerRef}
@@ -262,9 +262,8 @@ export default function VideoPlayer({ videoData, onTimeUpdate: onTimeUpdateProp,
 
         {/* Controls bar — slide up on show */}
         <div
-          className={`absolute bottom-0 left-0 right-0 px-4 pt-10 pb-3 transition-all duration-300 ${
-            showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
-          }`}
+          className={`absolute bottom-0 left-0 right-0 px-4 pt-10 pb-3 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+            }`}
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)' }}
         >
           {/* Progress bar */}
@@ -407,9 +406,8 @@ export default function VideoPlayer({ videoData, onTimeUpdate: onTimeUpdateProp,
                 <Tooltip label="Playback speed">
                   <button
                     onClick={() => setShowSpeedMenu(p => !p)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all hover:bg-white/15 ${
-                      playbackSpeed !== 1 ? 'text-red-400 bg-red-500/10' : 'text-white'
-                    }`}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all hover:bg-white/15 ${playbackSpeed !== 1 ? 'text-red-400 bg-red-500/10' : 'text-white'
+                      }`}
                   >
                     {playbackSpeed === 1 ? '1x' : `${playbackSpeed}x`}
                   </button>
@@ -420,9 +418,8 @@ export default function VideoPlayer({ videoData, onTimeUpdate: onTimeUpdateProp,
                       <button
                         key={s}
                         onClick={() => changeSpeed(s)}
-                        className={`w-full px-3 py-1.5 text-sm text-left hover:bg-white/10 transition-colors flex items-center justify-between gap-3 ${
-                          playbackSpeed === s ? 'text-red-400 font-semibold' : 'text-white/80'
-                        }`}
+                        className={`w-full px-3 py-1.5 text-sm text-left hover:bg-white/10 transition-colors flex items-center justify-between gap-3 ${playbackSpeed === s ? 'text-red-400 font-semibold' : 'text-white/80'
+                          }`}
                       >
                         <span>{s === 1 ? 'Normal' : `${s}x`}</span>
                         {playbackSpeed === s && <div className="w-1.5 h-1.5 bg-red-400 rounded-full" />}

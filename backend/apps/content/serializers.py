@@ -11,17 +11,17 @@ class EpisodeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_video_url(self, obj):
-        """Return video URL from either local or Cloudinary"""
-        if obj.video_file:
-            # Local file
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.video_file.url)
-            return obj.video_file.url
-        elif obj.video_url:
-            # Cloudinary
+        """Return video URL from Cloudinary"""
+        if obj.video_url:
             try:
-                return obj.video_url.url
+                import cloudinary
+                public_id = str(obj.video_url)
+                url, _ = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    resource_type='video',
+                    secure=True
+                )
+                return url
             except:
                 return None
         return None
@@ -87,15 +87,20 @@ class VideoContentSerializer(serializers.ModelSerializer):
         return None
 
     def get_video_url(self, obj):
-        """Return appropriate video URL based on storage type"""
-        if obj.is_public_domain and obj.video_file:
-            # Local file - return full URL
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.video_file.url)
-            return obj.video_file.url
-        elif not obj.is_public_domain and obj.youtube_trailer_url:
-            # YouTube embed URL
+        """Return video URL — Cloudinary upload or YouTube trailer"""
+        if obj.video_url:
+            try:
+                import cloudinary
+                public_id = str(obj.video_url)
+                url, _ = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    resource_type='video',
+                    secure=True
+                )
+                return url
+            except:
+                return None
+        elif obj.youtube_trailer_url:
             return obj.youtube_trailer_url
         return None
 

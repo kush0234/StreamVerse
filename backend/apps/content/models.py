@@ -57,29 +57,25 @@ class VideoContent(models.Model):
         'image',
         blank=True,
         null=True,
-        help_text="🖼️ Upload thumbnail image (required for both local and YouTube content)"
+        folder='thumbnails',
+        help_text="🖼️ Upload thumbnail image"
     )
-    video_url = CloudinaryField('video', blank=True, null=True)
-    trailer_url = CloudinaryField('video', blank=True, null=True)
+    video_url = CloudinaryField(
+        'video',
+        blank=True,
+        null=True,
+        folder='videos',
+        help_text="☁️ Upload video file — stored on Cloudinary"
+    )
+    trailer_url = CloudinaryField('video', blank=True, null=True, folder='videos')
     duration = models.IntegerField(
         blank=True,
         null=True,
-        help_text="Duration in minutes (auto-filled for local videos, manual for YouTube)"
+        help_text="Duration in minutes"
     )
     view_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Hybrid storage fields
-    is_public_domain = models.BooleanField(
-        default=False,
-        help_text="✅ Check for LOCAL video uploads | ❌ Uncheck for YouTube trailers only"
-    )
-    video_file = models.FileField(
-        upload_to='videos/',
-        blank=True,
-        null=True,
-        help_text="📁 Upload your local video file here (only for public domain content)"
-    )
     youtube_trailer_url = models.URLField(
         blank=True,
         null=True,
@@ -135,17 +131,15 @@ class Episode(models.Model):
     episode_number = models.IntegerField()
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    video_url = CloudinaryField('video', blank=True, null=True)
-    thumbnail = CloudinaryField('image', blank=True, null=True)
-    duration = models.IntegerField(blank=True, null=True)
-
-    # Hybrid storage for episodes
-    video_file = models.FileField(
-        upload_to='episodes/',
+    video_url = CloudinaryField(
+        'video',
         blank=True,
         null=True,
-        help_text="Local video file for public domain episodes"
+        folder='episodes',
+        help_text="☁️ Upload episode video — stored on Cloudinary"
     )
+    thumbnail = CloudinaryField('image', blank=True, null=True, folder='thumbnails')
+    duration = models.IntegerField(blank=True, null=True)
 
     # Approval workflow
     approval_status = models.CharField(
@@ -175,7 +169,7 @@ class Music(models.Model):
     album = models.CharField(max_length=200, blank=True, null=True)
     genre = models.CharField(max_length=100)
     release_date = models.DateField()
-    audio_file = CloudinaryField('raw', blank=True, null=True)
+    audio_file = CloudinaryField('raw', blank=True, null=True, folder='music')
     duration = models.IntegerField(default=0, help_text='Duration in seconds')
     play_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -6,11 +6,15 @@ import { adminApi } from '@/lib/adminApi';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import Breadcrumb from '@/components/admin/Breadcrumb';
+import { uploadWithProgress } from '@/lib/uploadWithProgress';
+import UploadProgress from '@/components/admin/UploadProgress';
 
 export default function AddEpisode() {
   const router = useRouter();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [calculatingDuration, setCalculatingDuration] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
@@ -23,13 +27,9 @@ export default function AddEpisode() {
     season_number: 1,
     episode_number: 1,
     duration: '',
-    is_local_upload: false,
     youtube_url: '',
   });
-  const [files, setFiles] = useState({
-    video_file: null,
-    thumbnail: null,
-  });
+  const [files, setFiles] = useState({ video_url: null, thumbnail: null });
 
   const steps = [
     { id: 1, title: 'Series & Basic Info', description: 'Select series, title, and description' },
@@ -64,7 +64,7 @@ export default function AddEpisode() {
     if (!selectedFiles?.[0]) return;
     setFiles(prev => ({ ...prev, [name]: selectedFiles[0] }));
 
-    if (name === 'video_file') {
+    if (name === 'video_url') {
       setCalculatingDuration(true);
       const video = document.createElement('video');
       video.preload = 'metadata';
@@ -85,8 +85,7 @@ export default function AddEpisode() {
     switch (step) {
       case 1: return formData.series && formData.title && formData.description;
       case 2:
-        if (formData.is_local_upload) return !!files.video_file;
-        return !!formData.youtube_url;
+        return !!(files.video_url || formData.youtube_url);
       case 3: return formData.season_number && formData.episode_number;
       case 4: return validateStep(1) && validateStep(2) && validateStep(3);
       default: return false;
@@ -115,6 +114,8 @@ export default function AddEpisode() {
     }
 
     setLoading(true);
+    setUploadProgress(0);
+    setIsProcessing(false);
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('series', formData.series);
@@ -124,19 +125,33 @@ export default function AddEpisode() {
       formDataToSend.append('episode_number', formData.episode_number);
       if (formData.duration) formDataToSend.append('duration', formData.duration);
 
-      if (formData.is_local_upload && files.video_file) {
-        formDataToSend.append('video_file', files.video_file);
+      if (files.video_url) {
+        formDataToSend.append('video_url', files.video_url);
       } else if (formData.youtube_url) {
         formDataToSend.append('video_url', formData.youtube_url);
       }
 
       if (files.thumbnail) formDataToSend.append('thumbnail', files.thumbnail);
 
-      await adminApi.createEpisodeWithFiles(formDataToSend);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const token = localStorage.getItem('access_token');
+
+      await uploadWithProgress(
+        `${API_BASE_URL}/admin-dashboard/episodes/`,
+        formDataToSend,
+        token,
+        (percent) => {
+          setUploadProgress(percent);
+          if (percent === 100) setIsProcessing(true);
+        }
+      );
+
       toast.success('Episode added successfully!');
       router.push('/admin-dashboard/episodes');
     } catch (err) {
       toast.error(err.message || 'Failed to add episode');
+      setUploadProgress(null);
+      setIsProcessing(false);
     } finally {
       setLoading(false);
     }
@@ -239,53 +254,27 @@ export default function AddEpisode() {
           {/* Step 2: Upload Method & Files */}
           {currentStep === 2 && (
             <div className="space-y-6">
-              {/* Upload method toggle */}
-              <div className="bg-blue-900/20 border border-blue-500/30 p-6 rounded">
-                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                  <span className="text-xl">📁</span> Choose Upload Method
-                </h3>
-                <label className="flex items-start gap-4 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="is_local_upload"
-                    checked={formData.is_local_upload}
-                    onChange={handleChange}
-                    className="w-5 h-5 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500 mt-1"
-                  />
-                  <div>
-                    <span className="text-white font-semibold">✅ Upload Local Video File</span>
-                    <p className="text-gray-400 text-sm mt-1">
-                      Check this to upload your own video file. Uncheck to use a YouTube embed URL instead.
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Local video upload */}
-              <div className={`bg-green-900/20 border border-green-500/30 p-4 rounded ${!formData.is_local_upload ? 'hidden' : ''}`}>
+              <div className="bg-green-900/20 border border-green-500/30 p-4 rounded">
                 <label className="block text-white mb-2">
-                  📁 Upload Local Video File <span className="text-red-500">*</span>
+                  ☁️ Upload Video to Cloudinary <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="file"
-                  name="video_file"
+                  name="video_url"
                   onChange={handleFileChange}
                   accept="video/*"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white file:cursor-pointer hover:file:bg-green-700"
                 />
-                {files.video_file && (
+                {files.video_url && (
                   <p className="text-gray-400 text-sm mt-1">
-                    ✅ Selected: {files.video_file.name} ({(files.video_file.size / 1024 / 1024).toFixed(2)} MB)
+                    ✅ {files.video_url.name} ({(files.video_url.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
-                <p className="text-green-400 text-xs mt-1">🎬 Upload MP4 format for best compatibility. Duration will be auto-calculated.</p>
+                <p className="text-green-400 text-xs mt-1">Upload MP4 format for best compatibility. Duration will be auto-calculated.</p>
               </div>
 
-              {/* YouTube URL */}
-              <div className={`bg-red-900/20 border border-red-500/30 p-4 rounded ${formData.is_local_upload ? 'hidden' : ''}`}>
-                <label className="block text-white mb-2">
-                  🎬 YouTube Embed URL <span className="text-red-500">*</span>
-                </label>
+              <div className="bg-gray-700/50 p-4 rounded">
+                <p className="text-gray-400 text-sm mb-2">Or use a YouTube embed URL instead:</p>
                 <input
                   type="url"
                   name="youtube_url"
@@ -294,7 +283,7 @@ export default function AddEpisode() {
                   placeholder="https://www.youtube.com/embed/VIDEO_ID"
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded"
                 />
-                <p className="text-red-400 text-xs mt-1">🔗 Use the embed URL format: https://www.youtube.com/embed/VIDEO_ID</p>
+                <p className="text-gray-500 text-xs mt-1">Leave empty if uploading a video file above.</p>
               </div>
 
               {/* Thumbnail */}
@@ -409,14 +398,14 @@ export default function AddEpisode() {
                   </div>
                   <div>
                     <h4 className="text-gray-300 font-medium mb-2">Content Details</h4>
-                    <p className="text-sm text-gray-400 mb-1"><strong>Storage:</strong> {formData.is_local_upload ? 'Local Upload' : 'YouTube Embed'}</p>
+                    <p className="text-sm text-gray-400 mb-1"><strong>Storage:</strong> {formData.youtube_url ? 'YouTube Embed' : 'Cloudinary Upload'}</p>
                     <p className="text-sm text-gray-400 mb-1"><strong>Duration:</strong> {formData.duration ? `${Math.floor(formData.duration / 60)}m ${formData.duration % 60}s` : 'Not set'}</p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <h4 className="text-gray-300 font-medium mb-2">Files</h4>
                   <p className="text-sm text-gray-400 mb-1">
-                    <strong>Video:</strong> {files.video_file ? files.video_file.name : formData.youtube_url || 'None'}
+                    <strong>Video:</strong> {files.video_url ? files.video_url.name : formData.youtube_url || 'None'}
                   </p>
                   <p className="text-sm text-gray-400">
                     <strong>Thumbnail:</strong> {files.thumbnail ? files.thumbnail.name : 'None'}
@@ -447,6 +436,8 @@ export default function AddEpisode() {
                   </div>
                 </div>
               </div>
+
+              <UploadProgress progress={uploadProgress} isProcessing={isProcessing} />
             </div>
           )}
 

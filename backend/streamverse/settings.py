@@ -185,6 +185,8 @@ CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    'MAX_FILE_SIZE': 104857600,  # 100MB
+    'RESOURCE_TYPE': 'video',
 }
 
 # Configure Cloudinary
@@ -195,13 +197,12 @@ cloudinary.config(
     secure=True
 )
 
+# Allow large file uploads (500MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000   # 500MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000   # 500MB
+
 STORAGES = {
     "default": {
-        # Use local file system for default storage (videos)
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "cloudinary": {
-        # Cloudinary for specific fields (thumbnails, music)
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
