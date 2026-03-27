@@ -35,37 +35,52 @@ class Migration(migrations.Migration):
             },
         ),
 
-        # Step 2: Migrate data from VideoWatchHistory
+        # Step 2: Migrate data from VideoWatchHistory (if table exists)
         migrations.RunSQL(
             sql="""
-                INSERT INTO content_watchhistory
-                    (media_type, user_id, profile_id, video_id, episode_id, music_id,
-                     duration_watched, completed, play_count, updated_at)
-                SELECT
-                    'VIDEO', user_id, profile_id, video_id, episode_id, NULL,
-                    duration_watched, completed, 1, updated_at
-                FROM content_videowatchhistory;
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'content_videowatchhistory') THEN
+                        INSERT INTO content_watchhistory
+                            (media_type, user_id, profile_id, video_id, episode_id, music_id,
+                             duration_watched, completed, play_count, updated_at)
+                        SELECT
+                            'VIDEO', user_id, profile_id, video_id, episode_id, NULL,
+                            duration_watched, completed, 1, updated_at
+                        FROM content_videowatchhistory;
+                    END IF;
+                END $$;
             """,
             reverse_sql="DELETE FROM content_watchhistory WHERE media_type = 'VIDEO';"
         ),
 
-        # Step 3: Migrate data from MusicListenHistory
+        # Step 3: Migrate data from MusicListenHistory (if table exists)
         migrations.RunSQL(
             sql="""
-                INSERT INTO content_watchhistory
-                    (media_type, user_id, profile_id, video_id, episode_id, music_id,
-                     duration_watched, completed, play_count, updated_at)
-                SELECT
-                    'MUSIC', user_id, profile_id, NULL, NULL, music_id,
-                    duration_listened, completed, play_count, updated_at
-                FROM content_musiclistenhistory;
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'content_musiclistenhistory') THEN
+                        INSERT INTO content_watchhistory
+                            (media_type, user_id, profile_id, video_id, episode_id, music_id,
+                             duration_watched, completed, play_count, updated_at)
+                        SELECT
+                            'MUSIC', user_id, profile_id, NULL, NULL, music_id,
+                            duration_listened, completed, play_count, updated_at
+                        FROM content_musiclistenhistory;
+                    END IF;
+                END $$;
             """,
             reverse_sql="DELETE FROM content_watchhistory WHERE media_type = 'MUSIC';"
         ),
 
-        # Step 4: Drop old tables
-        migrations.DeleteModel(name='VideoWatchHistory'),
-        migrations.DeleteModel(name='MusicListenHistory'),
+        # Step 4: Drop old tables if they exist
+        migrations.RunSQL(
+            sql="""
+                DROP TABLE IF EXISTS content_videowatchhistory CASCADE;
+                DROP TABLE IF EXISTS content_musiclistenhistory CASCADE;
+            """,
+            reverse_sql=""
+        ),
 
         # Step 5: Rename related_name on new table to match what code expects
         migrations.AlterField(
