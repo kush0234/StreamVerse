@@ -96,8 +96,8 @@ class MusicAdmin(admin.ModelAdmin):
 
 @admin.register(WatchHistory)
 class WatchHistoryAdmin(admin.ModelAdmin):
-    list_display = ["user", "profile", "content_type", "video", "music", "duration_watched", "completed", "play_count", "updated_at"]
-    list_filter = ["content_type", "completed", "updated_at"]
+    list_display = ["user", "profile", "media_type", "video", "music", "duration_watched", "completed", "play_count", "updated_at"]
+    list_filter = ["media_type", "completed", "updated_at"]
     search_fields = ["user__username", "profile__name", "video__title", "music__title"]
     readonly_fields = ["created_at", "updated_at"]
 

@@ -33,7 +33,7 @@ class SaveVideoProgressView(generics.CreateAPIView):
             episode_id=episode,
             defaults={
                 "user": request.user,
-                "content_type": "VIDEO",
+                "media_type": "VIDEO",
                 "duration_watched": request.data.get("duration_watched", 0),
                 "completed": request.data.get("completed", False),
             },
@@ -62,7 +62,7 @@ class ContinueWatchingView(generics.ListAPIView):
             return WatchHistory.objects.none()
 
         return WatchHistory.objects.filter(
-            profile_id=profile_id, content_type="VIDEO", completed=False
+            profile_id=profile_id, media_type="VIDEO", completed=False
         ).order_by("-updated_at")
 
 

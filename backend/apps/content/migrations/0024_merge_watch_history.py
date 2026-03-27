@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='WatchHistory',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('content_type', models.CharField(choices=[('VIDEO', 'Video'), ('MUSIC', 'Music')], default='VIDEO', max_length=10)),
+                ('media_type', models.CharField(choices=[('VIDEO', 'Video'), ('MUSIC', 'Music')], default='VIDEO', max_length=10)),
                 ('duration_watched', models.IntegerField(default=0)),
                 ('completed', models.BooleanField(default=False)),
                 ('play_count', models.IntegerField(default=1)),
@@ -39,28 +39,28 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="""
                 INSERT INTO content_watchhistory
-                    (content_type, user_id, profile_id, video_id, episode_id, music_id,
+                    (media_type, user_id, profile_id, video_id, episode_id, music_id,
                      duration_watched, completed, play_count, updated_at)
                 SELECT
                     'VIDEO', user_id, profile_id, video_id, episode_id, NULL,
                     duration_watched, completed, 1, updated_at
                 FROM content_videowatchhistory;
             """,
-            reverse_sql="DELETE FROM content_watchhistory WHERE content_type = 'VIDEO';"
+            reverse_sql="DELETE FROM content_watchhistory WHERE media_type = 'VIDEO';"
         ),
 
         # Step 3: Migrate data from MusicListenHistory
         migrations.RunSQL(
             sql="""
                 INSERT INTO content_watchhistory
-                    (content_type, user_id, profile_id, video_id, episode_id, music_id,
+                    (media_type, user_id, profile_id, video_id, episode_id, music_id,
                      duration_watched, completed, play_count, updated_at)
                 SELECT
                     'MUSIC', user_id, profile_id, NULL, NULL, music_id,
                     duration_listened, completed, play_count, updated_at
                 FROM content_musiclistenhistory;
             """,
-            reverse_sql="DELETE FROM content_watchhistory WHERE content_type = 'MUSIC';"
+            reverse_sql="DELETE FROM content_watchhistory WHERE media_type = 'MUSIC';"
         ),
 
         # Step 4: Drop old tables

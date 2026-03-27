@@ -143,7 +143,7 @@ class WatchHistorySerializer(serializers.ModelSerializer):
         model = WatchHistory
         fields = [
             "id",
-            "content_type",
+            "media_type",
             "video",
             "episode",
             "music",

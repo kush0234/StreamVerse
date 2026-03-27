@@ -186,7 +186,7 @@ class WatchHistory(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     profile = models.ForeignKey('users.Profile', on_delete=models.CASCADE)
-    content_type = models.CharField(max_length=10, choices=CONTENT_TYPES, default='VIDEO')
+    media_type = models.CharField(max_length=10, choices=CONTENT_TYPES, default='VIDEO')
 
     # Video fields
     video = models.ForeignKey(VideoContent, on_delete=models.CASCADE, blank=True, null=True, related_name='watch_history')

@@ -37,7 +37,7 @@ class RecommendationEngine:
         continue_watching = WatchHistory.objects.filter(
             user=user,
             profile=profile,
-            content_type='VIDEO',
+            media_type='VIDEO',
             completed=False,
             duration_watched__gt=0
         ).select_related('video', 'episode').order_by('-updated_at')[:limit]
@@ -115,7 +115,7 @@ class RecommendationEngine:
         recent_watches = WatchHistory.objects.filter(
             user=user,
             profile=profile,
-            content_type='VIDEO',
+            media_type='VIDEO',
             updated_at__gte=timezone.now() - timedelta(days=30)
         ).select_related('video').values_list('video_id', flat=True)
 
@@ -164,7 +164,7 @@ class RecommendationEngine:
         recent_listens = WatchHistory.objects.filter(
             user=user,
             profile=profile,
-            content_type='MUSIC',
+            media_type='MUSIC',
             updated_at__gte=timezone.now() - timedelta(days=30)
         ).select_related('music').values_list('music_id', flat=True)
 
@@ -303,7 +303,7 @@ class RecommendationEngine:
         top_picks = Music.objects.exclude(
             listen_history__user=user,
             listen_history__profile=profile,
-            listen_history__content_type='MUSIC'
+            listen_history__media_type='MUSIC'
         ).annotate(
             genre_score=Case(
                 *[When(genre__icontains=genre, then=score) for genre, score in user_genres.items()],
@@ -327,11 +327,11 @@ class RecommendationEngine:
         """Get user's preferred genres with scores"""
         if content_type == 'video':
             content_genres = WatchHistory.objects.filter(
-                user=user, profile=profile, content_type='VIDEO'
+                user=user, profile=profile, media_type='VIDEO'
             ).select_related('video').values_list('video__genre', flat=True)
         else:
             content_genres = WatchHistory.objects.filter(
-                user=user, profile=profile, content_type='MUSIC'
+                user=user, profile=profile, media_type='MUSIC'
             ).select_related('music').values_list('music__genre', flat=True)
 
         # Count genre preferences
@@ -347,7 +347,7 @@ class RecommendationEngine:
         """Get user's preferred tags with scores"""
         if content_type == 'video':
             watched_videos = WatchHistory.objects.filter(
-                user=user, profile=profile, content_type='VIDEO'
+                user=user, profile=profile, media_type='VIDEO'
             ).values_list('video_id', flat=True)
 
             tag_counts = Counter()
@@ -367,7 +367,7 @@ class RecommendationEngine:
     def _get_user_preferred_artists(self, user, profile):
         """Get user's preferred artists with scores"""
         listened_content = WatchHistory.objects.filter(
-            user=user, profile=profile, content_type='MUSIC'
+            user=user, profile=profile, media_type='MUSIC'
         ).select_related('music').values_list('music__artist', flat=True)
 
         # Count artist preferences
