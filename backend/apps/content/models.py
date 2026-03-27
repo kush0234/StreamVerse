@@ -180,21 +180,37 @@ class Music(models.Model):
     def __str__(self):
         return f"{self.title} - {self.artist}"
 
-class VideoWatchHistory(models.Model):
-    """Track user's watch progress"""
+class WatchHistory(models.Model):
+    """Unified watch/listen history for videos and music"""
+    CONTENT_TYPES = [('VIDEO', 'Video'), ('MUSIC', 'Music')]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     profile = models.ForeignKey('users.Profile', on_delete=models.CASCADE)
-    video = models.ForeignKey(VideoContent, on_delete=models.CASCADE, related_name='watch_history')
+    content_type = models.CharField(max_length=10, choices=CONTENT_TYPES, default='VIDEO')
+
+    # Video fields
+    video = models.ForeignKey(VideoContent, on_delete=models.CASCADE, blank=True, null=True, related_name='watch_history')
     episode = models.ForeignKey(Episode, on_delete=models.CASCADE, blank=True, null=True, related_name='watch_history')
+
+    # Music field
+    music = models.ForeignKey(Music, on_delete=models.CASCADE, blank=True, null=True, related_name='listen_history')
+
     duration_watched = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
+    play_count = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = 'Video Watch Histories'
+        verbose_name_plural = 'Watch Histories'
+        ordering = ['-updated_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.video.title}"
+        if self.video:
+            return f"{self.user.username} - {self.video.title}"
+        elif self.music:
+            return f"{self.user.username} - {self.music.title}"
+        return f"{self.user.username} - History"
 
 
 class Watchlist(models.Model):
@@ -324,25 +340,15 @@ class ContentSimilarity(models.Model):
 
 
 class MusicListenHistory(models.Model):
-    """Track user's music listening history"""
+    """Track user's music listening history - kept for migration reference only"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     profile = models.ForeignKey('users.Profile', on_delete=models.CASCADE)
-    music = models.ForeignKey(Music, on_delete=models.CASCADE, related_name='listen_history')
-
-    duration_listened = models.IntegerField(default=0, help_text='Duration listened in seconds')
+    music = models.ForeignKey(Music, on_delete=models.CASCADE, related_name='old_listen_history')
+    duration_listened = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
     play_count = models.IntegerField(default=1)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-updated_at']
-        indexes = [
-            models.Index(fields=['user', '-updated_at']),
-            models.Index(fields=['profile', '-updated_at']),
-            models.Index(fields=['music', '-updated_at']),
-        ]
-
-    def __str__(self):
-        return f"{self.user.username} - {self.music.title}"

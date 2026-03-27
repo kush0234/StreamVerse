@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import VideoContent, Episode, Music, VideoWatchHistory, Watchlist, Tag
+from .models import VideoContent, Episode, Music, WatchHistory, Watchlist, Tag
 
 
 class EpisodeSerializer(serializers.ModelSerializer):
@@ -135,20 +135,27 @@ class EpisodeMiniSerializer(serializers.ModelSerializer):
         fields = ["id", "season_number", "episode_number", "title", "duration"]
 
 
-class VideoWatchHistorySerializer(serializers.ModelSerializer):
+class WatchHistorySerializer(serializers.ModelSerializer):
     video = VideoContentMiniSerializer(read_only=True)
     episode = EpisodeMiniSerializer(read_only=True)
 
     class Meta:
-        model = VideoWatchHistory
+        model = WatchHistory
         fields = [
             "id",
+            "content_type",
             "video",
             "episode",
+            "music",
             "duration_watched",
             "completed",
+            "play_count",
             "updated_at",
         ]
+
+
+# Alias for backwards compatibility
+VideoWatchHistorySerializer = WatchHistorySerializer
 
 
 class ArtistSerializer(serializers.Serializer):

@@ -4,36 +4,36 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Q
-from .models import VideoContent, Episode, Music, VideoWatchHistory, Watchlist
+from .models import VideoContent, Episode, Music, WatchHistory, Watchlist
 from .serializers import (
     VideoContentSerializer,
     EpisodeSerializer,
     MusicSerializer,
-    VideoWatchHistorySerializer,
+    WatchHistorySerializer,
     WatchlistSerializer,
 )
 
 
 class SaveVideoProgressView(generics.CreateAPIView):
-    serializer_class = VideoWatchHistorySerializer
+    serializer_class = WatchHistorySerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         profile_id = request.data.get("profile")
 
-        # Ensure profile belongs to logged user
         if not request.user.profiles.filter(id=profile_id).exists():
             return Response({"error": "Invalid profile"}, status=403)
 
         video = request.data.get("video")
         episode = request.data.get("episode")
 
-        history, created = VideoWatchHistory.objects.update_or_create(
+        history, created = WatchHistory.objects.update_or_create(
             profile_id=profile_id,
             video_id=video,
             episode_id=episode,
             defaults={
                 "user": request.user,
+                "content_type": "VIDEO",
                 "duration_watched": request.data.get("duration_watched", 0),
                 "completed": request.data.get("completed", False),
             },
@@ -44,26 +44,25 @@ class SaveVideoProgressView(generics.CreateAPIView):
 
 
 class ContinueWatchingView(generics.ListAPIView):
-    serializer_class = VideoWatchHistorySerializer
+    serializer_class = WatchHistorySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         profile_id = self.request.query_params.get("profile")
 
         if not profile_id:
-            return VideoWatchHistory.objects.none()
+            return WatchHistory.objects.none()
 
         try:
             profile_id = int(profile_id)
         except ValueError:
-            return VideoWatchHistory.objects.none()
+            return WatchHistory.objects.none()
 
-        # Ensure profile belongs to user
         if not self.request.user.profiles.filter(id=profile_id).exists():
-            return VideoWatchHistory.objects.none()
+            return WatchHistory.objects.none()
 
-        return VideoWatchHistory.objects.filter(
-            profile_id=profile_id, completed=False
+        return WatchHistory.objects.filter(
+            profile_id=profile_id, content_type="VIDEO", completed=False
         ).order_by("-updated_at")
 
 
@@ -111,23 +110,23 @@ class TrendingVideosView(generics.ListAPIView):
 
 
 class RecentlyWatchedView(generics.ListAPIView):
-    serializer_class = VideoWatchHistorySerializer
+    serializer_class = WatchHistorySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         profile_id = self.request.query_params.get("profile")
         if not profile_id:
-            return VideoWatchHistory.objects.none()
+            return WatchHistory.objects.none()
 
         try:
             profile_id = int(profile_id)
         except ValueError:
-            return VideoWatchHistory.objects.none()
+            return WatchHistory.objects.none()
 
         if not self.request.user.profiles.filter(id=profile_id).exists():
-            return VideoWatchHistory.objects.none()
+            return WatchHistory.objects.none()
 
-        return VideoWatchHistory.objects.filter(profile_id=profile_id).order_by(
+        return WatchHistory.objects.filter(profile_id=profile_id).order_by(
             "-updated_at"
         )[:20]
 
