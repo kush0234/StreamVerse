@@ -38,7 +38,7 @@ function SearchContent() {
           headers: { 'Authorization': `Bearer ${token}` },
         }).then(res => res.json()),
       ]);
-      
+
       setVideos(videoData);
       setMusic(musicData);
     } catch (err) {
@@ -49,9 +49,9 @@ function SearchContent() {
   };
 
   return (
-    <div className="pt-20 px-8 py-12">
-      <h1 className="text-4xl font-bold mb-2">Search Results for "{query}"</h1>
-      <p className="text-gray-400 mb-8">
+    <div className="pt-20 px-4 sm:px-6 md:px-8 py-8 md:py-12">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Search Results for "{query}"</h1>
+      <p className="text-gray-400 text-sm sm:text-base mb-6 md:mb-8">
         Found {videos.length + music.length} results
       </p>
 
@@ -67,7 +67,7 @@ function SearchContent() {
           {videos.length > 0 && (
             <ContentRow title="Videos" items={videos} />
           )}
-          
+
           {music.length > 0 && (
             <div className="mt-8">
               <ContentRow title="Music" items={music} type="music" />
@@ -91,7 +91,7 @@ export default function SearchPage() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
       <Suspense fallback={
-        <div className="pt-20 px-8 py-12">
+        <div className="pt-20 px-4 sm:px-8 py-12">
           <LoadingSkeleton />
         </div>
       }>

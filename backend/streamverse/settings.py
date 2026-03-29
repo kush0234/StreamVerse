@@ -20,7 +20,7 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -29,9 +29,10 @@ load_dotenv(BASE_DIR / '.env')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-90r!7i+8(=c*@xl!elf@guf-3z75ln_h0hdd%p$9w8y5b-6+0-")
 
-DEBUG = os.getenv("DEBUG", "True") == "True"
+_debug_env = os.getenv("DEBUG", "True")
+DEBUG = _debug_env.strip().lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
 
 # Disable security checks for development
 SILENCED_SYSTEM_CHECKS = [

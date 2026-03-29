@@ -191,7 +191,7 @@ export default function DetailPage() {
       <Navbar />
 
       {/* Hero Section with Backdrop */}
-      <div className="relative h-[90vh]">
+      <div className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] lg:h-[90vh]">
         {content.thumbnail && (
           <div className="absolute inset-0">
             <img
@@ -203,11 +203,11 @@ export default function DetailPage() {
           </div>
         )}
 
-        <div className="relative h-full flex items-end px-12 pb-8">
+        <div className="relative h-full flex items-end px-4 sm:px-8 md:px-12 pb-6 md:pb-8">
           <div className="max-w-7xl w-full">
-            <div className="flex items-end gap-8">
-              {/* Poster */}
-              <div className="flex-shrink-0 w-64 rounded-lg overflow-hidden shadow-2xl border-4 border-gray-700">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-8">
+              {/* Poster - hidden on mobile, shown on sm+ */}
+              <div className="hidden sm:block flex-shrink-0 w-32 md:w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl border-2 md:border-4 border-gray-700">
                 <img
                   src={content.thumbnail}
                   alt={content.title}
@@ -216,35 +216,35 @@ export default function DetailPage() {
               </div>
 
               {/* Title and Actions */}
-              <div className="flex-1 pb-4">
-                <h1 className="text-6xl font-bold mb-4">{content.title}</h1>
+              <div className="flex-1 pb-2 md:pb-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-3 md:mb-4">{content.title}</h1>
 
-                <div className="flex items-center gap-4 mb-6">
-                  <span className="flex items-center gap-2 text-yellow-400 font-bold text-lg">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 md:mb-6">
+                  <span className="flex items-center gap-1 sm:gap-2 text-yellow-400 font-bold text-sm sm:text-base md:text-lg">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     {content.rating}
                   </span>
-                  <span className="px-3 py-1 bg-gray-700 rounded text-sm font-semibold">
+                  <span className="px-2 sm:px-3 py-1 bg-gray-700 rounded text-xs sm:text-sm font-semibold">
                     {content.genre}
                   </span>
-                  <span className="text-gray-300">{content.release_date?.split('-')[0]}</span>
+                  <span className="text-gray-300 text-sm">{content.release_date?.split('-')[0]}</span>
                   {content.duration && (
-                    <span className="text-gray-300">{Math.round(content.duration / 60)} min</span>
+                    <span className="text-gray-300 text-sm">{Math.round(content.duration / 60)} min</span>
                   )}
                 </div>
 
-                <p className="text-lg text-gray-300 mb-6 leading-relaxed max-w-3xl">
+                <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-4 md:mb-6 leading-relaxed max-w-3xl line-clamp-3 md:line-clamp-none">
                   {content.description}
                 </p>
 
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-2 sm:gap-4">
                   <button
                     onClick={() => document.getElementById('video-section')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="flex items-center gap-3 bg-red-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-red-700 transition"
+                    className="flex items-center gap-2 sm:gap-3 bg-red-600 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-lg font-bold text-sm sm:text-lg hover:bg-red-700 transition"
                   >
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                     </svg>
                     Play Now
@@ -252,18 +252,18 @@ export default function DetailPage() {
 
                   <button
                     onClick={toggleWatchlist}
-                    className="flex items-center gap-3 bg-gray-800/90 backdrop-blur-sm px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-700 transition border border-gray-600"
+                    className="flex items-center gap-2 sm:gap-3 bg-gray-800/90 backdrop-blur-sm px-4 sm:px-8 py-2 sm:py-3 rounded-lg font-bold text-sm sm:text-lg hover:bg-gray-700 transition border border-gray-600"
                   >
                     {inWatchlist ? (
                       <>
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                         In Watchlist
                       </>
                     ) : (
                       <>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                         Watchlist
@@ -278,8 +278,8 @@ export default function DetailPage() {
       </div>
 
       {/* Trailer or Video Player Section */}
-      <div id="video-section" className="bg-gray-900 py-12">
-        <div className="max-w-5xl mx-auto px-12">
+      <div id="video-section" className="bg-gray-900 py-8 md:py-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 md:px-12">
           {content.youtube_trailer_url ? (
             /* Show Trailer */
             <div>
@@ -360,10 +360,10 @@ export default function DetailPage() {
                     {filteredEpisodes.map((episode) => (
                       <div
                         key={episode.id}
-                        className={`group flex gap-6 bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition cursor-pointer ${currentEpisode?.id === episode.id ? 'ring-2 ring-red-600' : ''}`}
+                        className={`group flex flex-col sm:flex-row gap-3 sm:gap-6 bg-gray-800 p-3 sm:p-4 rounded-lg hover:bg-gray-750 transition cursor-pointer ${currentEpisode?.id === episode.id ? 'ring-2 ring-red-600' : ''}`}
                         onClick={() => setCurrentEpisode(episode)}
                       >
-                        <div className="flex-shrink-0 w-48 aspect-video bg-gray-700 rounded overflow-hidden relative">
+                        <div className="flex-shrink-0 w-full sm:w-48 aspect-video bg-gray-700 rounded overflow-hidden relative">
                           {episode.thumbnail ? (
                             <img
                               src={episode.thumbnail}
@@ -429,8 +429,8 @@ export default function DetailPage() {
 
       {/* Tabs Navigation */}
       <div className="bg-gray-900 border-b border-gray-800 sticky top-[64px] z-40">
-        <div className="max-w-7xl mx-auto px-12">
-          <div className="flex gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12">
+          <div className="flex gap-4 sm:gap-8 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -452,7 +452,7 @@ export default function DetailPage() {
 
       {/* Tab Content */}
       <div className="bg-gray-900 pb-16">
-        <div className="max-w-7xl mx-auto px-12 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12 py-8 md:py-12">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-12">
@@ -548,7 +548,7 @@ export default function DetailPage() {
               {similarContent.length > 0 ? (
                 <>
                   <h2 className="text-2xl font-bold mb-6">Similar Content</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
                     {similarContent.map((item) => (
                       <div
                         key={item.id}

@@ -25,16 +25,16 @@ export default function ContentRow({ title, items, type = 'video' }) {
 
   return (
     <div className="mb-12 animate-fade-in">
-      <h2 className="text-2xl font-bold mb-6 px-8 text-shadow">{title}</h2>
-      <div className="flex gap-4 overflow-x-auto px-8 pb-4 scrollbar-hide">
+      <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 md:mb-6 px-4 md:px-8 text-shadow">{title}</h2>
+      <div className="flex gap-3 md:gap-4 overflow-x-auto px-4 md:px-8 pb-4 scrollbar-hide">
         {items.map((item, index) => (
           <div
             key={item.id}
             onClick={() => handleClick(item)}
-            className="flex-shrink-0 w-[280px] cursor-pointer group"
+            className="flex-shrink-0 w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] cursor-pointer group"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <div className="relative w-full h-[157.5px] bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105 group-hover:ring-2 ring-white/20">
+            <div className="relative w-full h-[90px] sm:h-[112px] md:h-[135px] lg:h-[157.5px] bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105 group-hover:ring-2 ring-white/20">
               {item.thumbnail ? (
                 <>
                   <img
@@ -49,7 +49,7 @@ export default function ContentRow({ title, items, type = 'video' }) {
                   {type === 'music' ? '🎵' : '🎬'}
                 </div>
               )}
-              
+
               {/* Play button overlay */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-2xl transform group-hover:scale-110 transition-transform">
@@ -67,7 +67,7 @@ export default function ContentRow({ title, items, type = 'video' }) {
                 </div>
               )}
             </div>
-            
+
             <div className="mt-3 px-1">
               <h3 className="text-base font-semibold truncate group-hover:text-white transition-colors">{item.title}</h3>
               {type === 'music' && item.artist && (
@@ -85,8 +85,8 @@ export default function ContentRow({ title, items, type = 'video' }) {
                   {item.tags && item.tags.length > 0 && (
                     <>
                       {item.tags.slice(0, 2).map((tag) => (
-                        <span 
-                          key={tag.id} 
+                        <span
+                          key={tag.id}
                           className="text-xs text-purple-400 px-2 py-0.5 bg-purple-900/30 rounded-full border border-purple-500/30"
                         >
                           {tag.name}

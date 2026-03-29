@@ -83,8 +83,8 @@ export default function WatchlistPage() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <div className="pt-20 px-8 py-12">
-          <h1 className="text-4xl font-bold mb-8">My List</h1>
+        <div className="pt-20 px-4 sm:px-6 md:px-8 py-12">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-8">My List</h1>
           <LoadingSkeleton />
         </div>
       </div>
@@ -94,28 +94,27 @@ export default function WatchlistPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
-      
-      <div className="pt-20 px-8 py-8">
+
+      <div className="pt-20 px-4 sm:px-6 md:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3">My List</h1>
-          <p className="text-gray-400 text-lg">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3">My List</h1>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg">
             {watchlist.length} items • {movieCount} Movies & Series • {musicCount} Songs
           </p>
         </div>
 
         {/* Tabs */}
         <div className="mb-8 border-b border-gray-800">
-          <div className="flex gap-8">
+          <div className="flex gap-4 sm:gap-8 overflow-x-auto scrollbar-hide">
             {['All', 'Movies & Series', 'Music'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 px-2 font-semibold transition relative ${
-                  activeTab === tab
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-gray-300'
-                }`}
+                className={`pb-3 px-2 font-semibold transition relative ${activeTab === tab
+                  ? 'text-white'
+                  : 'text-gray-400 hover:text-gray-300'
+                  }`}
               >
                 {tab}
                 {activeTab === tab && (
@@ -127,19 +126,18 @@ export default function WatchlistPage() {
         </div>
 
         {filteredList.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
             {filteredList.map((item) => {
               const content = item.video || item.music;
               const isMusic = !!item.music;
-              
+
               return (
                 <div key={item.id} className="group">
                   <div className="relative">
                     <div
                       onClick={() => handleClick(item)}
-                      className={`${
-                        isMusic ? 'aspect-square' : 'aspect-[2/3]'
-                      } bg-gray-800 rounded-lg overflow-hidden cursor-pointer group-hover:ring-2 ring-white transition transform group-hover:scale-105`}
+                      className={`${isMusic ? 'aspect-square' : 'aspect-[2/3]'
+                        } bg-gray-800 rounded-lg overflow-hidden cursor-pointer group-hover:ring-2 ring-white transition transform group-hover:scale-105`}
                     >
                       {content.thumbnail ? (
                         <img
@@ -160,7 +158,7 @@ export default function WatchlistPage() {
                           )}
                         </div>
                       )}
-                      
+
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                         <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -168,7 +166,7 @@ export default function WatchlistPage() {
                         </svg>
                       </div>
                     </div>
-                    
+
                     {/* Remove button */}
                     <button
                       onClick={(e) => {
@@ -185,14 +183,13 @@ export default function WatchlistPage() {
 
                     {/* Type badge */}
                     <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        isMusic ? 'bg-purple-600' : 'bg-blue-600'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${isMusic ? 'bg-purple-600' : 'bg-blue-600'
+                        }`}>
                         {isMusic ? 'MUSIC' : item.video?.content_type || 'VIDEO'}
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Info */}
                   <div className="mt-3">
                     <h3 className="font-semibold truncate group-hover:text-blue-400 transition">
@@ -222,8 +219,8 @@ export default function WatchlistPage() {
               {activeTab === 'All' ? 'Your list is empty' : `No ${activeTab.toLowerCase()} in your list`}
             </p>
             <p className="text-gray-500 mt-2">
-              {activeTab === 'All' 
-                ? 'Add movies, series, or music to your list' 
+              {activeTab === 'All'
+                ? 'Add movies, series, or music to your list'
                 : `Add some ${activeTab.toLowerCase()} to see them here`}
             </p>
           </div>

@@ -70,26 +70,25 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-8 mt-16">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Feedback Board</h1>
-            <p className="text-gray-400">Share your ideas and vote on suggestions</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 md:mb-2">Feedback Board</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Share your ideas and vote on suggestions</p>
           </div>
           <button
             onClick={() => router.push('/feedback/submit')}
-            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+            className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center gap-2 transition-colors text-sm sm:text-base"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             Submit Feedback
           </button>
         </div>
 
         {/* Filters */}
         <div className="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -162,22 +161,21 @@ export default function FeedbackPage() {
             {feedbacks.map((feedback) => (
               <div
                 key={feedback.id}
-                className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
+                className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
                 onClick={() => router.push(`/feedback/${feedback.id}`)}
               >
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   {/* Vote Section */}
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex sm:flex-col items-center gap-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleVote(feedback.id, 'UP');
                       }}
-                      className={`p-2 rounded-lg transition-colors ${
-                        feedback.user_vote === 'UP'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${feedback.user_vote === 'UP'
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                        }`}
                     >
                       <ThumbsUp size={20} />
                     </button>
@@ -187,11 +185,10 @@ export default function FeedbackPage() {
                         e.stopPropagation();
                         handleVote(feedback.id, 'DOWN');
                       }}
-                      className={`p-2 rounded-lg transition-colors ${
-                        feedback.user_vote === 'DOWN'
-                          ? 'bg-red-500/20 text-red-400'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${feedback.user_vote === 'DOWN'
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                        }`}
                     >
                       <ThumbsDown size={20} />
                     </button>

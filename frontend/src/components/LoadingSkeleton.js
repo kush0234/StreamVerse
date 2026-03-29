@@ -6,7 +6,7 @@ function SkeletonBox({ className = "" }) {
 
 function CardSkeleton() {
   return (
-    <div className="min-w-[260px] max-w-[260px] flex-shrink-0">
+    <div className="min-w-[160px] sm:min-w-[200px] md:min-w-[240px] lg:min-w-[260px] max-w-[260px] flex-shrink-0">
       {/* Thumbnail */}
       <SkeletonBox className="aspect-video rounded-xl mb-3" />
       {/* Badge + title row */}
@@ -77,7 +77,7 @@ export default function LoadingSkeleton({ count = 5, variant = "row" }) {
 
   // default: horizontal scroll row
   return (
-    <div className="flex gap-4 overflow-x-auto px-8 pb-4 scrollbar-hide">
+    <div className="flex gap-3 md:gap-4 overflow-x-auto px-4 md:px-8 pb-4 scrollbar-hide">
       {[...Array(count)].map((_, i) => (
         <CardSkeleton key={i} />
       ))}

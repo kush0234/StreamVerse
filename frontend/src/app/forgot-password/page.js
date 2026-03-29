@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
         <div className="absolute top-20 right-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
 
-        <div className="relative bg-black/70 backdrop-blur-xl p-12 rounded-2xl w-full max-w-md border border-gray-800 shadow-2xl text-center">
+        <div className="relative bg-black/70 backdrop-blur-xl p-6 sm:p-8 md:p-12 rounded-2xl w-full max-w-md mx-4 border border-gray-800 shadow-2xl text-center">
           <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
       <div className="absolute top-20 right-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow" />
       <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
 
-      <div className="relative bg-black/70 backdrop-blur-xl p-12 rounded-2xl w-full max-w-md border border-gray-800 shadow-2xl">
+      <div className="relative bg-black/70 backdrop-blur-xl p-6 sm:p-8 md:p-12 rounded-2xl w-full max-w-md mx-4 border border-gray-800 shadow-2xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img

@@ -34,7 +34,7 @@ export default function SearchBar() {
 
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      
+
       try {
         const [videos, music] = await Promise.all([
           api.getVideos(token).catch(() => []),
@@ -42,9 +42,9 @@ export default function SearchBar() {
         ]);
 
         const searchLower = query.toLowerCase();
-        
+
         const videoResults = videos
-          .filter(v => 
+          .filter(v =>
             v.title.toLowerCase().includes(searchLower) ||
             v.genre.toLowerCase().includes(searchLower)
           )
@@ -52,7 +52,7 @@ export default function SearchBar() {
           .map(v => ({ ...v, type: 'video' }));
 
         const musicResults = music
-          .filter(m => 
+          .filter(m =>
             m.title.toLowerCase().includes(searchLower) ||
             m.artist.toLowerCase().includes(searchLower) ||
             m.genre.toLowerCase().includes(searchLower)
@@ -115,13 +115,13 @@ export default function SearchBar() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="bg-gray-800/90 backdrop-blur-sm text-white px-3 py-2 pl-9 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 md:w-64 lg:w-80 transition-all text-sm"
+                className="bg-gray-800/90 backdrop-blur-sm text-white px-3 py-2 pl-9 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-36 sm:w-48 md:w-64 lg:w-80 transition-all text-sm"
                 autoFocus
               />
-              <svg 
-                className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -159,7 +159,7 @@ export default function SearchBar() {
 
           {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full mt-2 right-0 w-80 md:w-96 bg-gray-900/95 backdrop-blur-lg rounded-lg shadow-2xl border border-gray-800 overflow-hidden z-50 animate-fade-in">
+            <div className="absolute top-full mt-2 right-0 w-72 sm:w-80 md:w-96 bg-gray-900/95 backdrop-blur-lg rounded-lg shadow-2xl border border-gray-800 overflow-hidden z-50 animate-fade-in">
               <div className="max-h-96 overflow-y-auto">
                 {suggestions.map((item, index) => (
                   <button
@@ -170,8 +170,8 @@ export default function SearchBar() {
                     {/* Thumbnail */}
                     <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden bg-gray-800">
                       {item.thumbnail ? (
-                        <img 
-                          src={item.thumbnail} 
+                        <img
+                          src={item.thumbnail}
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
@@ -197,11 +197,10 @@ export default function SearchBar() {
                         )}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          item.type === 'video' 
-                            ? 'bg-blue-600/20 text-blue-400' 
-                            : 'bg-purple-600/20 text-purple-400'
-                        }`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'video'
+                          ? 'bg-blue-600/20 text-blue-400'
+                          : 'bg-purple-600/20 text-purple-400'
+                          }`}>
                           {item.type === 'video' ? 'Video' : 'Music'}
                         </span>
                         {item.rating && (
@@ -232,7 +231,7 @@ export default function SearchBar() {
 
           {/* No Results */}
           {showSuggestions && suggestions.length === 0 && query.trim().length >= 2 && !loading && (
-            <div className="absolute top-full mt-2 right-0 w-80 md:w-96 bg-gray-900/95 backdrop-blur-lg rounded-lg shadow-2xl border border-gray-800 p-6 text-center z-50 animate-fade-in">
+            <div className="absolute top-full mt-2 right-0 w-72 sm:w-80 md:w-96 bg-gray-900/95 backdrop-blur-lg rounded-lg shadow-2xl border border-gray-800 p-6 text-center z-50 animate-fade-in">
               <div className="text-4xl mb-2">🔍</div>
               <p className="text-gray-400">No results found for "{query}"</p>
               <p className="text-sm text-gray-500 mt-2">Try different keywords</p>

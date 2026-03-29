@@ -58,12 +58,12 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-black to-purple-900/20" />
-      
+
       {/* Animated background elements */}
       <div className="absolute top-20 right-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow" />
       <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
 
-      <div className="relative bg-black/70 backdrop-blur-xl p-12 rounded-2xl w-full max-w-md border border-gray-800 shadow-2xl animate-fade-in">
+      <div className="relative bg-black/70 backdrop-blur-xl p-6 sm:p-8 md:p-12 rounded-2xl w-full max-w-md mx-4 border border-gray-800 shadow-2xl animate-fade-in">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img

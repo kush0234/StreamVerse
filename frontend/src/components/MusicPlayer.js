@@ -312,8 +312,8 @@ export default function MusicPlayer({ musicId, onClose }) {
   if (!musicId) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-3xl max-w-lg w-full overflow-hidden border border-gray-700/50 shadow-2xl animate-scale-in">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-end sm:items-center justify-center sm:p-4 animate-fade-in">
+      <div className="bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg overflow-hidden border border-gray-700/50 shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
         {loading ? (
           <div className="p-16 text-center">
             <div className="relative w-16 h-16 mx-auto mb-4">
@@ -351,7 +351,7 @@ export default function MusicPlayer({ musicId, onClose }) {
               {/* Album Art with Glow Effect */}
               <div className="relative mb-6">
                 <div className={`absolute inset-0 bg-blue-500/20 blur-3xl rounded-full transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}></div>
-                <div className="relative w-56 h-56 mx-auto rounded-2xl overflow-hidden shadow-2xl group">
+                <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto rounded-2xl overflow-hidden shadow-2xl group">
                   {music.thumbnail ? (
                     <img
                       src={music.thumbnail}
@@ -406,12 +406,12 @@ export default function MusicPlayer({ musicId, onClose }) {
               </div>
 
               {/* Controls - All in One Line with Centered Playback */}
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-between sm:justify-center gap-2 sm:gap-0">
                 {/* Like - Fixed Width */}
-                <div className="w-32 flex justify-center">
+                <div className="sm:w-32 flex justify-center">
                   <button
                     onClick={toggleLike}
-                    className="text-gray-400 hover:text-white transition-all hover:scale-110"
+                    className="text-gray-400 hover:text-white transition-all hover:scale-110 p-2"
                   >
                     <svg
                       className={`w-6 h-6 transition-colors ${isLiked ? 'text-red-500 fill-current' : ''}`}
@@ -455,7 +455,7 @@ export default function MusicPlayer({ musicId, onClose }) {
                 </div>
 
                 {/* Volume - Fixed Width */}
-                <div className="w-32 flex justify-center items-center gap-2">
+                <div className="hidden sm:flex sm:w-32 justify-center items-center gap-2">
                   <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     {volume > 50 ? (
                       <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />

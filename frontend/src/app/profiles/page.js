@@ -86,7 +86,7 @@ export default function ProfilesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-black text-white">
       {/* Header */}
-      <div className="fixed top-0 w-full z-50 px-8 py-6 glass-effect">
+      <div className="fixed top-0 w-full z-50 px-4 sm:px-8 py-4 sm:py-6 glass-effect">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <img
             src="/logo.png"
@@ -106,13 +106,13 @@ export default function ProfilesPage() {
         </div>
       </div>
 
-      <div className="pt-32 pb-20 px-8">
+      <div className="pt-28 sm:pt-32 pb-20 px-4 sm:px-8">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-5xl font-bold mb-12 text-center animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-8 sm:mb-12 text-center animate-fade-in">
             Who's Watching?
           </h1>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-6 md:gap-8 mb-12">
             {profiles.map((profile, index) => (
               <div
                 key={profile.id}
@@ -120,24 +120,21 @@ export default function ProfilesPage() {
                 className="flex flex-col items-center cursor-pointer group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="relative mb-4">
+                <div className="relative mb-3 md:mb-4">
                   {profile.profile_image_url ? (
                     <img
                       src={profile.profile_image_url}
                       alt={profile.name}
-                      className="w-32 h-32 rounded-full object-cover border-4 border-transparent group-hover:border-white transition-all duration-300 shadow-2xl"
+                      className="w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-transparent group-hover:border-white transition-all duration-300 shadow-2xl"
                     />
                   ) : (
-                    <div className="w-32 h-32 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center text-5xl font-bold border-4 border-transparent group-hover:border-white transition-all duration-300 shadow-2xl group-hover:scale-110">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center text-2xl sm:text-4xl md:text-5xl font-bold border-4 border-transparent group-hover:border-white transition-all duration-300 shadow-2xl group-hover:scale-110">
                       {profile.name.charAt(0).toUpperCase()}
                     </div>
                   )}
-
-                  {/* Hover overlay */}
                   <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
-
-                <span className="text-lg font-medium text-gray-400 group-hover:text-white transition-colors text-center">
+                <span className="text-sm sm:text-base md:text-lg font-medium text-gray-400 group-hover:text-white transition-colors text-center truncate w-full text-center">
                   {profile.name}
                 </span>
               </div>
@@ -150,23 +147,23 @@ export default function ProfilesPage() {
                 className="flex flex-col items-center cursor-pointer group animate-fade-in"
                 style={{ animationDelay: `${profiles.length * 100}ms` }}
               >
-                <div className="w-32 h-32 rounded-full flex items-center justify-center border-4 border-gray-700 group-hover:border-white transition-all duration-300 mb-4 group-hover:scale-110">
-                  <svg className="w-16 h-16 text-gray-700 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center border-4 border-gray-700 group-hover:border-white transition-all duration-300 mb-3 md:mb-4 group-hover:scale-110">
+                  <svg className="w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 text-gray-700 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <span className="text-lg font-medium text-gray-400 group-hover:text-white transition-colors">
+                <span className="text-sm sm:text-base md:text-lg font-medium text-gray-400 group-hover:text-white transition-colors">
                   Add Profile
                 </span>
               </div>
             ) : (
               <div className="flex flex-col items-center opacity-40 cursor-not-allowed animate-fade-in">
-                <div className="w-32 h-32 rounded-full flex items-center justify-center border-4 border-gray-800 mb-4">
-                  <svg className="w-14 h-14 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center border-4 border-gray-800 mb-3 md:mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-gray-600 text-center">
+                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">
                   Limit reached
                   <br />
                   <span className="text-xs">Upgrade plan for more</span>
@@ -247,7 +244,7 @@ export default function ProfilesPage() {
       {/* Create Profile Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-gradient-to-b from-gray-900 to-black p-8 rounded-2xl w-full max-w-md border border-gray-800 shadow-2xl">
+          <div className="bg-gradient-to-b from-gray-900 to-black p-6 sm:p-8 rounded-2xl w-full max-w-md mx-4 border border-gray-800 shadow-2xl">
             <h2 className="text-3xl font-bold mb-6">Add Profile</h2>
             <p className="text-gray-400 mb-6">Add a profile for another person watching StreamVerse.</p>
 

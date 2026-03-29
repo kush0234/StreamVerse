@@ -53,21 +53,21 @@ export default function PlansPage() {
       `Up to ${plan.max_profiles} profiles`,
       'Full content library',
     ];
-    
+
     if (plan.has_ads) {
       features.push('Ads included');
     } else {
       features.push('Ad-free experience');
     }
-    
+
     if (plan.can_download) {
       features.push('Download for offline viewing');
     }
-    
+
     if (plan.priority_support) {
       features.push('Priority customer support');
     }
-    
+
     return features;
   };
 
@@ -81,7 +81,7 @@ export default function PlansPage() {
 
   const handleSelectPlan = async (plan) => {
     const token = localStorage.getItem('access_token');
-    
+
     if (!token) {
       router.push('/login');
       return;
@@ -91,7 +91,7 @@ export default function PlansPage() {
 
     setSelectedPlan(plan);
     setProcessing(true);
-    
+
     try {
       // Initiate payment
       const orderData = await api.initiatePayment(
@@ -131,7 +131,7 @@ export default function PlansPage() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <div className="pt-20 px-8 py-12 flex items-center justify-center">
+        <div className="pt-20 px-4 sm:px-8 py-12 flex items-center justify-center">
           <div className="text-xl">Loading plans...</div>
         </div>
       </div>
@@ -141,14 +141,14 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
-      
-      <div className="pt-20 px-8 py-12">
+
+      <div className="pt-20 px-4 sm:px-6 md:px-8 py-8 md:py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
             Choose Your Perfect Plan
           </h1>
-          <p className="text-xl text-gray-400 mb-8">
+          <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 md:mb-8">
             Unlimited entertainment. Cancel anytime.
           </p>
 
@@ -156,21 +156,19 @@ export default function PlansPage() {
           <div className="inline-flex bg-gray-900 rounded-full p-1">
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`px-8 py-3 rounded-full font-semibold transition ${
-                billingCycle === 'monthly'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+              className={`px-8 py-3 rounded-full font-semibold transition ${billingCycle === 'monthly'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white'
+                }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle('yearly')}
-              className={`px-8 py-3 rounded-full font-semibold transition relative ${
-                billingCycle === 'yearly'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+              className={`px-8 py-3 rounded-full font-semibold transition relative ${billingCycle === 'yearly'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white'
+                }`}
             >
               Yearly
               <span className="absolute -top-2 -right-2 bg-green-500 text-xs px-2 py-1 rounded-full">
@@ -181,17 +179,16 @@ export default function PlansPage() {
         </div>
 
         {/* Plans Grid */}
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 mb-12">
+        <div className="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
           {plans.map((plan) => {
             const isPopular = plan.name === 'STANDARD';
             return (
               <div
                 key={plan.id}
-                className={`relative bg-gray-900/50 rounded-2xl p-8 border-2 transition-all hover:scale-105 ${
-                  isPopular
-                    ? 'border-blue-500 shadow-lg shadow-blue-500/20'
-                    : 'border-gray-800 hover:border-gray-700'
-                }`}
+                className={`relative bg-gray-900/50 rounded-2xl p-8 border-2 transition-all hover:scale-105 ${isPopular
+                  ? 'border-blue-500 shadow-lg shadow-blue-500/20'
+                  : 'border-gray-800 hover:border-gray-700'
+                  }`}
               >
                 {isPopular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -231,11 +228,10 @@ export default function PlansPage() {
                 <button
                   onClick={() => handleSelectPlan(plan)}
                   disabled={processing && selectedPlan?.id === plan.id}
-                  className={`w-full py-4 rounded-lg font-semibold transition ${
-                    isPopular
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
-                      : 'bg-gray-800 hover:bg-gray-700'
-                  } ${processing && selectedPlan?.id === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full py-4 rounded-lg font-semibold transition ${isPopular
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                    : 'bg-gray-800 hover:bg-gray-700'
+                    } ${processing && selectedPlan?.id === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {processing && selectedPlan?.id === plan.id ? 'Processing...' : `Choose ${plan.display_name}`}
                 </button>

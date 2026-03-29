@@ -41,18 +41,18 @@ export default function MoviesPage() {
         api.getVideos(token, 'SERIES'),
         api.getGenres(token, 'video'),
       ]);
-      
+
       setAllMovies(movieData);
       setAllSeries(seriesData);
       setFilteredMovies(movieData);
       setFilteredSeries(seriesData);
-      
+
       // Extract and split genres (handle comma-separated genres)
       const allGenres = [...new Set([
         ...movieData.flatMap(m => m.genre ? m.genre.split(',').map(g => g.trim()) : []),
         ...seriesData.flatMap(s => s.genre ? s.genre.split(',').map(g => g.trim()) : [])
       ])].filter(Boolean).sort();
-      
+
       setGenres(allGenres);
     } catch (err) {
       console.error('Failed to load content', err);
@@ -67,11 +67,11 @@ export default function MoviesPage() {
 
     // Filter by search query
     if (searchQuery) {
-      movies = movies.filter(m => 
+      movies = movies.filter(m =>
         m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (m.genre && m.genre.toLowerCase().includes(searchQuery.toLowerCase()))
       );
-      series = series.filter(s => 
+      series = series.filter(s =>
         s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.genre && s.genre.toLowerCase().includes(searchQuery.toLowerCase()))
       );
@@ -106,17 +106,17 @@ export default function MoviesPage() {
     setFilteredSeries(series);
   };
 
-  const totalResults = contentType === 'All Content' 
+  const totalResults = contentType === 'All Content'
     ? filteredMovies.length + filteredSeries.length
-    : contentType === 'Movies' 
-    ? filteredMovies.length 
-    : filteredSeries.length;
+    : contentType === 'Movies'
+      ? filteredMovies.length
+      : filteredSeries.length;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <div className="pt-20 px-8 py-12">
+        <div className="pt-20 px-4 sm:px-8 py-12">
           <LoadingSkeleton />
         </div>
       </div>
@@ -126,12 +126,12 @@ export default function MoviesPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
-      
-      <div className="pt-20 px-8 py-8">
+
+      <div className="pt-20 px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3">Movies & Series</h1>
-          <p className="text-gray-400 text-lg">Explore our collection of {allMovies.length + allSeries.length} titles</p>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3">Movies & Series</h1>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg">Explore our collection of {allMovies.length + allSeries.length} titles</p>
         </div>
 
         {/* Search Bar */}
@@ -155,11 +155,10 @@ export default function MoviesPage() {
                 <button
                   key={type}
                   onClick={() => setContentType(type)}
-                  className={`px-6 py-2.5 rounded-lg whitespace-nowrap transition font-semibold ${
-                    contentType === type
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
+                  className={`px-6 py-2.5 rounded-lg whitespace-nowrap transition font-semibold ${contentType === type
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    }`}
                 >
                   {type}
                 </button>
@@ -188,11 +187,10 @@ export default function MoviesPage() {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setSelectedGenre('All')}
-              className={`px-5 py-2 rounded-full whitespace-nowrap transition font-medium ${
-                selectedGenre === 'All'
-                  ? 'bg-white text-black'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
-              }`}
+              className={`px-5 py-2 rounded-full whitespace-nowrap transition font-medium ${selectedGenre === 'All'
+                ? 'bg-white text-black'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                }`}
             >
               All
             </button>
@@ -200,11 +198,10 @@ export default function MoviesPage() {
               <button
                 key={genre}
                 onClick={() => setSelectedGenre(genre)}
-                className={`px-5 py-2 rounded-full whitespace-nowrap transition font-medium ${
-                  selectedGenre === genre
-                    ? 'bg-white text-black'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
-                }`}
+                className={`px-5 py-2 rounded-full whitespace-nowrap transition font-medium ${selectedGenre === genre
+                  ? 'bg-white text-black'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                  }`}
               >
                 {genre}
               </button>
@@ -220,7 +217,7 @@ export default function MoviesPage() {
           {(contentType === 'All Content' || contentType === 'Movies') && filteredMovies.length > 0 && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Movies</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                 {filteredMovies.map((movie) => (
                   <div
                     key={movie.id}
@@ -260,7 +257,7 @@ export default function MoviesPage() {
           {(contentType === 'All Content' || contentType === 'Series') && filteredSeries.length > 0 && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Series</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                 {filteredSeries.map((series) => (
                   <div
                     key={series.id}

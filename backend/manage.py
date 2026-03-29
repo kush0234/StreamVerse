@@ -2,6 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env before Django initializes so ALLOWED_HOSTS etc. are available
+load_dotenv(Path(__file__).resolve().parent / '.env', override=True)
 
 
 def main():

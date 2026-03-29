@@ -188,7 +188,7 @@ export default function MusicPage() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <div className="pt-20 px-8 py-12">
+        <div className="pt-20 px-4 sm:px-8 py-12">
           <LoadingSkeleton />
         </div>
       </div>
@@ -342,7 +342,7 @@ export default function MusicPage() {
         <p className="text-gray-400">{filteredArtists.length} Artists</p>
 
         {filteredArtists.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
             {filteredArtists.map((artist) => (
               <div
                 key={artist.name}
@@ -417,7 +417,7 @@ export default function MusicPage() {
         <p className="text-gray-400">{filteredAlbums.length} Albums</p>
 
         {filteredAlbums.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
             {filteredAlbums.map((album) => (
               <div
                 key={`${album.artist}-${album.title}`}
@@ -476,11 +476,11 @@ export default function MusicPage() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <div className="pt-20 px-8 py-8">
+      <div className="pt-20 px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3">Music</h1>
-          <p className="text-gray-400 text-lg">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3">Music</h1>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg">
             Discover and enjoy {allMusic.length} tracks from {artists.length} artists across {albums.length} albums
           </p>
         </div>
@@ -498,7 +498,7 @@ export default function MusicPage() {
 
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-800">
-          <div className="flex gap-8">
+          <div className="flex gap-4 sm:gap-8 overflow-x-auto scrollbar-hide">
             {['Songs', 'Albums', 'Artists'].map((tab) => (
               <button
                 key={tab}
