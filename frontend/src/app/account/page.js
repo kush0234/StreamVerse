@@ -258,19 +258,19 @@ export default function AccountPage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
-            <div className="bg-gray-900/30 rounded-xl p-4 sm:p-6 md:p-8">
+          <div className="flex-1 min-w-0">
+            <div className="bg-gray-900/30 rounded-xl p-4 sm:p-6">
 
               {/* Profile Management */}
               {activeSection === 'profile' && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-6">Profile Management</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Profile Management</h2>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                     {profiles.map((profile) => (
                       <div
                         key={profile.id}
-                        className="bg-gray-800/50 rounded-lg p-6 text-center hover:bg-gray-700/50 transition group relative"
+                        className="bg-gray-800/50 rounded-lg p-3 sm:p-4 text-center hover:bg-gray-700/50 transition group relative"
                       >
                         <div
                           className="cursor-pointer"
@@ -279,16 +279,16 @@ export default function AccountPage() {
                             router.push('/browse');
                           }}
                         >
-                          <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-transparent group-hover:border-blue-500 transition">
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 overflow-hidden border-2 border-transparent group-hover:border-blue-500 transition">
                             {profile.profile_image_url ? (
                               <img src={profile.profile_image_url} alt={profile.name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold">
+                              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl sm:text-2xl font-bold">
                                 {profile.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
-                          <h3 className="font-semibold mb-1">{profile.name}</h3>
+                          <h3 className="font-semibold text-sm truncate mb-1">{profile.name}</h3>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${profile.maturity_level === 'KIDS'
                             ? 'bg-yellow-500/20 text-yellow-400'
                             : 'bg-gray-700 text-gray-400'
@@ -331,14 +331,14 @@ export default function AccountPage() {
                     {profiles.length < (user?.max_profiles ?? 2) && (
                       <button
                         onClick={() => setShowAddProfile(true)}
-                        className="bg-gray-800/30 border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-gray-800/50 transition"
+                        className="bg-gray-800/30 border-2 border-dashed border-gray-700 rounded-lg p-3 sm:p-4 text-center hover:border-blue-500 hover:bg-gray-800/50 transition"
                       >
-                        <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-3 flex items-center justify-center">
-                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-700 rounded-full mx-auto mb-2 flex items-center justify-center">
+                          <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
-                        <h3 className="font-semibold text-gray-400">Add Profile</h3>
+                        <h3 className="font-semibold text-sm text-gray-400">Add Profile</h3>
                       </button>
                     )}
                   </div>
@@ -346,7 +346,7 @@ export default function AccountPage() {
                   {/* Add Profile Modal */}
                   {showAddProfile && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                      <div className="bg-gray-900 rounded-xl p-8 max-w-md w-full">
+                      <div className="bg-gray-900 rounded-xl p-5 sm:p-8 max-w-md w-full">
                         <h3 className="text-2xl font-bold mb-6">Add New Profile</h3>
 
                         <div className="mb-4">
@@ -437,7 +437,7 @@ export default function AccountPage() {
                   {/* Edit Profile Modal */}
                   {showEditProfile && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                      <div className="bg-gray-900 rounded-xl p-8 max-w-md w-full">
+                      <div className="bg-gray-900 rounded-xl p-5 sm:p-8 max-w-md w-full">
                         <h3 className="text-2xl font-bold mb-6">Edit Profile</h3>
 
                         <div className="mb-4">
@@ -584,27 +584,23 @@ export default function AccountPage() {
               {/* Account Information */}
               {activeSection === 'account' && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-6">Account Information</h2>
-
-                  <div className="space-y-6">
-                    <div className="bg-gray-800/50 rounded-lg p-6">
-                      <label className="block text-sm text-gray-400 mb-2">Username</label>
-                      <p className="text-xl font-semibold">{user?.username}</p>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Account Information</h2>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="bg-gray-800/50 rounded-lg p-4 sm:p-5">
+                      <label className="block text-xs sm:text-sm text-gray-400 mb-1">Username</label>
+                      <p className="text-base sm:text-lg font-semibold">{user?.username}</p>
                     </div>
-
-                    <div className="bg-gray-800/50 rounded-lg p-6">
-                      <label className="block text-sm text-gray-400 mb-2">Email</label>
-                      <p className="text-xl font-semibold">{user?.email || 'Not provided'}</p>
+                    <div className="bg-gray-800/50 rounded-lg p-4 sm:p-5">
+                      <label className="block text-xs sm:text-sm text-gray-400 mb-1">Email</label>
+                      <p className="text-base sm:text-lg font-semibold break-all">{user?.email || 'Not provided'}</p>
                     </div>
-
-                    <div className="bg-gray-800/50 rounded-lg p-6">
-                      <label className="block text-sm text-gray-400 mb-2">Member Since</label>
-                      <p className="text-xl font-semibold">{user?.member_since || 'N/A'}</p>
+                    <div className="bg-gray-800/50 rounded-lg p-4 sm:p-5">
+                      <label className="block text-xs sm:text-sm text-gray-400 mb-1">Member Since</label>
+                      <p className="text-base sm:text-lg font-semibold">{user?.member_since || 'N/A'}</p>
                     </div>
-
-                    <div className="bg-gray-800/50 rounded-lg p-6">
-                      <label className="block text-sm text-gray-400 mb-2">Total Profiles</label>
-                      <p className="text-xl font-semibold">{user?.profile_count || profiles.length} / {user?.max_profiles ?? 2}</p>
+                    <div className="bg-gray-800/50 rounded-lg p-4 sm:p-5">
+                      <label className="block text-xs sm:text-sm text-gray-400 mb-1">Total Profiles</label>
+                      <p className="text-base sm:text-lg font-semibold">{user?.profile_count || profiles.length} / {user?.max_profiles ?? 2}</p>
                     </div>
                   </div>
                 </div>
@@ -613,11 +609,11 @@ export default function AccountPage() {
               {/* Privacy & Security */}
               {activeSection === 'security' && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-6">Privacy & Security</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Privacy & Security</h2>
 
                   {/* Change Password */}
-                  <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
-                    <h3 className="text-xl font-semibold mb-4">Change Password</h3>
+                  <div className="bg-gray-800/50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-xl font-semibold mb-4">Change Password</h3>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <div>
                         <label className="block text-sm mb-2">Current Password</label>
@@ -659,29 +655,29 @@ export default function AccountPage() {
                   </div>
 
                   {/* Activity Log */}
-                  <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
-                    <h3 className="text-xl font-semibold mb-4">Recent Activity</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                  <div className="bg-gray-800/50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-xl font-semibold mb-4">Recent Activity</h3>
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-gray-700 gap-1">
                         <div>
-                          <p className="font-medium">Login from Windows PC</p>
-                          <p className="text-sm text-gray-400">Chrome Browser • 192.168.1.1</p>
+                          <p className="font-medium text-sm sm:text-base">Login from Windows PC</p>
+                          <p className="text-xs sm:text-sm text-gray-400">Chrome Browser • 192.168.1.1</p>
                         </div>
-                        <span className="text-sm text-gray-400">2 hours ago</span>
+                        <span className="text-xs text-gray-500">2 hours ago</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-700">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-gray-700 gap-1">
                         <div>
-                          <p className="font-medium">Profile Created</p>
-                          <p className="text-sm text-gray-400">New profile added</p>
+                          <p className="font-medium text-sm sm:text-base">Profile Created</p>
+                          <p className="text-xs sm:text-sm text-gray-400">New profile added</p>
                         </div>
-                        <span className="text-sm text-gray-400">1 day ago</span>
+                        <span className="text-xs text-gray-500">1 day ago</span>
                       </div>
-                      <div className="flex justify-between items-center py-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 gap-1">
                         <div>
-                          <p className="font-medium">Password Changed</p>
-                          <p className="text-sm text-gray-400">Security update</p>
+                          <p className="font-medium text-sm sm:text-base">Password Changed</p>
+                          <p className="text-xs sm:text-sm text-gray-400">Security update</p>
                         </div>
-                        <span className="text-sm text-gray-400">3 days ago</span>
+                        <span className="text-xs text-gray-500">3 days ago</span>
                       </div>
                     </div>
                   </div>
@@ -706,7 +702,7 @@ export default function AccountPage() {
                   {/* Delete Account Confirmation Modal */}
                   {showDeleteConfirm && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                      <div className="bg-gray-900 rounded-xl p-8 max-w-md w-full border-2 border-red-600/50">
+                      <div className="bg-gray-900 rounded-xl p-5 sm:p-8 max-w-md w-full border-2 border-red-600/50">
                         <div className="text-center mb-6">
                           <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -759,39 +755,30 @@ export default function AccountPage() {
               {/* Subscription & Billing */}
               {activeSection === 'billing' && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-6">Subscription & Billing</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Subscription & Billing</h2>
 
                   {subscription ? (
                     <>
                       {/* Current Plan */}
-                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 mb-6">
-                        <div className="flex justify-between items-start">
+                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                           <div>
-                            <h3 className="text-2xl font-bold mb-2">{subscription.plan_details?.display_name || 'Plan'}</h3>
-                            <p className="text-blue-100 mb-4">{subscription.plan_details?.description || 'Streaming plan'}</p>
-                            <p className="text-3xl font-bold">
+                            <h3 className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">{subscription.plan_details?.display_name || 'Plan'}</h3>
+                            <p className="text-blue-100 text-sm mb-2 sm:mb-4">{subscription.plan_details?.description || 'Streaming plan'}</p>
+                            <p className="text-2xl sm:text-3xl font-bold">
                               ₹{subscription.billing_cycle === 'MONTHLY' ? subscription.plan_details?.monthly_price : subscription.plan_details?.yearly_price}
-                              <span className="text-lg font-normal">/{subscription.billing_cycle === 'MONTHLY' ? 'month' : 'year'}</span>
+                              <span className="text-sm font-normal">/{subscription.billing_cycle === 'MONTHLY' ? 'month' : 'year'}</span>
                             </p>
                             {subscription.days_left !== undefined && (
-                              <p className="text-sm text-blue-200 mt-2">
-                                {subscription.days_left} days remaining
-                              </p>
+                              <p className="text-xs sm:text-sm text-blue-200 mt-1 sm:mt-2">{subscription.days_left} days remaining</p>
                             )}
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${subscription.status === 'ACTIVE' ? 'bg-green-500/20 text-green-300' :
-                            subscription.status === 'TRIAL' ? 'bg-blue-500/20 text-blue-300' :
-                              subscription.status === 'CANCELLED' ? 'bg-red-500/20 text-red-300' :
-                                'bg-gray-500/20 text-gray-300'
-                            }`}>
+                          <span className={`self-start px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${subscription.status === 'ACTIVE' ? 'bg-green-500/20 text-green-300' : subscription.status === 'TRIAL' ? 'bg-blue-500/20 text-blue-300' : subscription.status === 'CANCELLED' ? 'bg-red-500/20 text-red-300' : 'bg-gray-500/20 text-gray-300'}`}>
                             {subscription.status}
                           </span>
                         </div>
-                        <div className="flex gap-3 mt-4">
-                          <button
-                            onClick={() => router.push('/plans')}
-                            className="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-lg font-semibold transition"
-                          >
+                        <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
+                          <button onClick={() => router.push('/plans')} className="bg-white/10 hover:bg-white/20 px-4 sm:px-6 py-2 rounded-lg text-sm font-semibold transition">
                             Change Plan
                           </button>
                           {subscription.status === 'ACTIVE' && (
@@ -808,7 +795,7 @@ export default function AccountPage() {
                                   }
                                 }
                               }}
-                              className="bg-red-600/20 hover:bg-red-600/30 text-red-300 px-6 py-2 rounded-lg font-semibold transition"
+                              className="bg-red-600/20 hover:bg-red-600/30 text-red-300 px-4 sm:px-6 py-2 rounded-lg text-sm font-semibold transition"
                             >
                               Cancel Subscription
                             </button>
@@ -818,8 +805,8 @@ export default function AccountPage() {
 
                       {/* Plan Features */}
                       {subscription.plan_details && (
-                        <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
-                          <h3 className="text-xl font-semibold mb-4">Plan Features</h3>
+                        <div className="bg-gray-800/50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                          <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4">Plan Features</h3>
                           <ul className="space-y-3">
                             <li className="flex items-center gap-3">
                               <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -866,23 +853,19 @@ export default function AccountPage() {
                       )}
 
                       {/* Billing History */}
-                      <div className="bg-gray-800/50 rounded-lg p-6">
-                        <h3 className="text-xl font-semibold mb-4">Billing History</h3>
+                      <div className="bg-gray-800/50 rounded-lg p-4 sm:p-6">
+                        <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4">Billing History</h3>
                         {paymentHistory.length > 0 ? (
-                          <div className="space-y-3">
+                          <div className="space-y-2 sm:space-y-3">
                             {paymentHistory.map((payment) => (
-                              <div key={payment.id} className="flex justify-between items-center py-3 border-b border-gray-700 last:border-0">
-                                <div>
-                                  <p className="font-medium">{new Date(payment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                                  <p className="text-sm text-gray-400">{payment.subscription_plan}</p>
+                              <div key={payment.id} className="flex justify-between items-center py-2 sm:py-3 border-b border-gray-700 last:border-0 gap-2">
+                                <div className="min-w-0">
+                                  <p className="font-medium text-sm truncate">{new Date(payment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                                  <p className="text-xs text-gray-400 truncate">{payment.subscription_plan}</p>
                                 </div>
-                                <div className="text-right">
-                                  <p className="font-semibold">₹{payment.amount}</p>
-                                  <span className={`text-xs px-2 py-1 rounded ${payment.payment_status === 'SUCCESS' ? 'bg-green-600/20 text-green-400' :
-                                    payment.payment_status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
-                                      payment.payment_status === 'FAILED' ? 'bg-red-600/20 text-red-400' :
-                                        'bg-gray-600/20 text-gray-400'
-                                    }`}>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="font-semibold text-sm">₹{payment.amount}</p>
+                                  <span className={`text-xs px-2 py-0.5 rounded ${payment.payment_status === 'SUCCESS' ? 'bg-green-600/20 text-green-400' : payment.payment_status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' : payment.payment_status === 'FAILED' ? 'bg-red-600/20 text-red-400' : 'bg-gray-600/20 text-gray-400'}`}>
                                     {payment.payment_status}
                                   </span>
                                 </div>
@@ -890,7 +873,7 @@ export default function AccountPage() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-gray-400 text-center py-4">No payment history available</p>
+                          <p className="text-gray-400 text-center py-4 text-sm">No payment history available</p>
                         )}
                       </div>
                     </>
@@ -913,34 +896,29 @@ export default function AccountPage() {
               {/* Help & Support */}
               {activeSection === 'help' && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-6">Help & Support</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Help & Support</h2>
 
-                  {/* Quick Links */}
-                  <div className="grid md:grid-cols-2 gap-4 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                     {[
                       { title: 'FAQ', desc: 'Find answers to common questions', icon: '❓' },
                       { title: 'Contact Support', desc: 'Get help from our team', icon: '💬' },
                       { title: 'Terms of Service', desc: 'Read our terms and conditions', icon: '📄' },
                       { title: 'Privacy Policy', desc: 'Learn how we protect your data', icon: '🔒' },
                     ].map((item, index) => (
-                      <button
-                        key={index}
-                        className="bg-gray-800/50 hover:bg-gray-700/50 rounded-lg p-6 text-left transition"
-                      >
-                        <div className="text-3xl mb-3">{item.icon}</div>
-                        <h3 className="font-semibold mb-1">{item.title}</h3>
-                        <p className="text-sm text-gray-400">{item.desc}</p>
+                      <button key={index} className="bg-gray-800/50 hover:bg-gray-700/50 rounded-lg p-4 sm:p-5 text-left transition">
+                        <div className="text-2xl sm:text-3xl mb-2">{item.icon}</div>
+                        <h3 className="font-semibold text-sm sm:text-base mb-0.5">{item.title}</h3>
+                        <p className="text-xs sm:text-sm text-gray-400">{item.desc}</p>
                       </button>
                     ))}
                   </div>
 
-                  {/* About */}
-                  <div className="bg-gray-800/50 rounded-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">About StreamVerse</h3>
-                    <p className="text-gray-400 mb-4">
+                  <div className="bg-gray-800/50 rounded-lg p-4 sm:p-6">
+                    <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4">About StreamVerse</h3>
+                    <p className="text-gray-400 text-sm sm:text-base mb-3 sm:mb-4">
                       StreamVerse is your ultimate entertainment destination. Watch unlimited movies, TV shows, and listen to music anytime, anywhere.
                     </p>
-                    <p className="text-sm text-gray-500">Version 1.0.0</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Version 1.0.0</p>
                   </div>
                 </div>
               )}
