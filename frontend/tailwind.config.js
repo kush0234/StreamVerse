@@ -5,22 +5,4 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  theme: {
-    extend: {
-      keyframes: {
-        shrink: {
-          '0%': { width: '100%' },
-          '100%': { width: '0%' },
-        },
-        shimmer: {
-          '100%': { transform: 'translateX(100%)' },
-        },
-      },
-      animation: {
-        shrink: 'shrink linear forwards',
-        shimmer: 'shimmer 1.5s infinite',
-      },
-    },
-  },
-  plugins: [],
 }
