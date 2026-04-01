@@ -11,27 +11,28 @@ class ActivityLog(models.Model):
         ('USER_REGISTERED', 'User Registered'),
         ('USER_LOGIN', 'User Login'),
         ('USER_LOGOUT', 'User Logout'),
+        ('LOGIN_FAILED', 'Login Failed'),
         ('PROFILE_CREATED', 'Profile Created'),
         ('PASSWORD_RESET', 'Password Reset'),
-        
+
         # Content Activities
         ('VIDEO_UPLOADED', 'Video Uploaded'),
         ('EPISODE_ADDED', 'Episode Added'),
         ('MUSIC_UPLOADED', 'Music Uploaded'),
         ('CONTENT_DELETED', 'Content Deleted'),
         ('CONTENT_UPDATED', 'Content Updated'),
-        
+
         # Subscription Activities
         ('SUBSCRIPTION_PURCHASED', 'Subscription Purchased'),
         ('SUBSCRIPTION_CANCELLED', 'Subscription Cancelled'),
         ('PAYMENT_SUCCESS', 'Payment Success'),
         ('PAYMENT_FAILED', 'Payment Failed'),
-        
+
         # Feedback Activities
         ('FEEDBACK_SUBMITTED', 'Feedback Submitted'),
         ('FEEDBACK_UPDATED', 'Feedback Updated'),
         ('FEEDBACK_RESOLVED', 'Feedback Resolved'),
-        
+
         # Admin Activities
         ('ADMIN_LOGIN', 'Admin Login'),
         ('CONTENT_MODERATED', 'Content Moderated'),
@@ -110,7 +111,7 @@ class ActivityLog(models.Model):
         """Helper method to log activities"""
         ip_address = None
         user_agent = ""
-        
+
         if request:
             ip_address = cls.get_client_ip(request)
             user_agent = request.META.get('HTTP_USER_AGENT', '')

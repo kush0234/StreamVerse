@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     RegisterView,
     CustomTokenObtainPairView,
+    LogoutView,
     UserInfoView,
     ChangePasswordView,
     PasswordResetRequestView,
@@ -28,6 +29,7 @@ urlpatterns = [
     # Auth
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", CustomTokenObtainPairView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
     path("user-info/", UserInfoView.as_view(), name="user-info"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset-request"),

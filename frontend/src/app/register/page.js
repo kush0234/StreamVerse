@@ -32,20 +32,24 @@ export default function RegisterPage() {
       const data = await api.register(
         formData.username,
         formData.email,
-        formData.password
+        formData.password,
+        formData.confirmPassword
       );
 
-      if (data.username || data.id) {
+      // Success: backend returns the created user object with an id
+      if (data.id) {
         router.push('/login');
-      } else if (data.username) {
-        setError(data.username[0]);
-      } else if (data.email) {
-        setError(data.email[0]);
-      } else if (data.password) {
-        setError(data.password[0]);
-      } else {
-        setError('Registration failed. Please try again.');
+        return;
       }
+
+      // Handle field-level validation errors from backend
+      if (data.username) setError(Array.isArray(data.username) ? data.username[0] : data.username);
+      else if (data.email) setError(Array.isArray(data.email) ? data.email[0] : data.email);
+      else if (data.password) setError(Array.isArray(data.password) ? data.password[0] : data.password);
+      else if (data.password2) setError(Array.isArray(data.password2) ? data.password2[0] : data.password2);
+      else if (data.non_field_errors) setError(Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors);
+      else setError('Registration failed. Please try again.');
+
     } catch (err) {
       console.error('Registration error:', err);
       setError('Something went wrong. Please try again.');

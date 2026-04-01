@@ -57,11 +57,11 @@ export const getValidAccessToken = async () => {
 };
 
 export const api = {
-  async register(username, email, password) {
+  async register(username, email, password, password2) {
     const res = await fetch(`${API_BASE_URL}/auth/register/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, email, password, password2 }),
     });
     return res.json();
   },

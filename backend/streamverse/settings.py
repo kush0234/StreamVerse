@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "apps.users",
     "apps.content",
     "apps.feedback",
@@ -162,6 +163,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day",
+        "login": "5/minute",       # strict limit on login attempts
+    },
 }
 
 
@@ -176,10 +186,11 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # 1 hour access token
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # 7 days refresh token
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,           # issue new refresh token on every refresh
+    "BLACKLIST_AFTER_ROTATION": True,        # blacklist old refresh token after rotation
+    "UPDATE_LAST_LOGIN": True,               # update last_login on every login
 }
 
 MEDIA_URL = "/media/"

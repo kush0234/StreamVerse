@@ -13,11 +13,19 @@ from .serializers import (
     PasswordResetConfirmSerializer,
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.throttling import AnonRateThrottle
 from .models import User, Profile
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from apps.admin_dashboard.models import ActivityLog
 import uuid
 from django.conf import settings
+
+
+class LoginRateThrottle(AnonRateThrottle):
+    rate = '5/minute'
+    scope = 'login'
 
 
 class RegisterView(generics.CreateAPIView):
@@ -27,7 +35,6 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        # Log user registration activity
         ActivityLog.log_activity(
             activity_type='USER_REGISTERED',
             user=user,
@@ -38,6 +45,48 @@ class RegisterView(generics.CreateAPIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        # Log failed login attempts (super() raises exception on failure, so this only runs on success)
+        return response
+
+    def handle_exception(self, exc):
+        from rest_framework.exceptions import AuthenticationFailed
+        from django.contrib.auth import get_user_model
+        # Log failed login attempt
+        username = self.request.data.get('username', '')
+        UserModel = get_user_model()
+        try:
+            user = UserModel.objects.get(username=username)
+        except UserModel.DoesNotExist:
+            user = None
+        ActivityLog.log_activity(
+            activity_type='LOGIN_FAILED',
+            user=user,
+            description=f'Failed login attempt for username "{username}"',
+            request=self.request
+        )
+        return super().handle_exception(exc)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh_token')
+        if not refresh_token:
+            return Response(
+                {"error": "refresh_token is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+        except TokenError:
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserInfoView(APIView):

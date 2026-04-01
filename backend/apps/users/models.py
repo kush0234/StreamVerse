@@ -16,6 +16,7 @@ class User(AbstractUser):
     )
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="USER")
+    email = models.EmailField(unique=True)  # enforce unique emails
 
     def __str__(self):
         return self.username

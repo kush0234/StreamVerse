@@ -10,17 +10,39 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password]
     )
+    password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ("username", "email", "password")
+        fields = ("username", "email", "password", "password2")
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value.lower()
+
+    def validate_username(self, value):
+        import re
+        if not re.match(r'^[\w.@+-]+$', value):
+            raise serializers.ValidationError(
+                "Username may only contain letters, digits, and @/./+/-/_ characters."
+            )
+        if len(value) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters.")
+        return value
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
+        return attrs
 
     def create(self, validated_data):
+        validated_data.pop('password2')
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
-            role="USER",  # force default role so user can not be admin
+            role="USER",  # force default role so user cannot be admin
         )
         return user
 
@@ -30,6 +52,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(
         required=True, write_only=True, validators=[validate_password]
     )
+    refresh_token = serializers.CharField(required=False, write_only=True)
 
     def validate_current_password(self, value):
         user = self.context['request'].user
@@ -41,6 +64,17 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.save()
+
+        # Blacklist the provided refresh token so old sessions are invalidated
+        refresh_token = self.validated_data.get('refresh_token')
+        if refresh_token:
+            try:
+                from rest_framework_simplejwt.tokens import RefreshToken
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass  # token already invalid or blacklisted — that's fine
+
         return user
 
 
@@ -128,19 +162,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-
-        # Add custom fields to token
         token["role"] = user.role
         token["username"] = user.username
-
         return token
 
     def validate(self, attrs):
         data = super().validate(attrs)
-
         data["role"] = self.user.role
         data["username"] = self.user.username
-
+        data["last_login"] = (
+            self.user.last_login.isoformat() if self.user.last_login else None
+        )
         return data
 
 
@@ -255,8 +287,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "date_joined", "member_since", "profile_count", "max_profiles", "subscription_info"]
-        read_only_fields = ["id", "username", "email", "date_joined"]
+        fields = ["id", "username", "email", "date_joined", "last_login", "member_since", "profile_count", "max_profiles", "subscription_info"]
+        read_only_fields = ["id", "username", "email", "date_joined", "last_login"]
 
     def get_profile_count(self, obj):
         return obj.profiles.count()
