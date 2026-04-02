@@ -142,7 +142,7 @@ export default function PlansPage() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <div className="pt-24 px-4 sm:px-6 md:px-8 py-8 md:py-12">
+      <div className="pt-28 pb-8 px-4 sm:px-6 md:px-8 md:pb-12">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4">

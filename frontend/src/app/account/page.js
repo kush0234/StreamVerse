@@ -228,7 +228,7 @@ export default function AccountPage() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <div className="pt-24 px-4 sm:px-6 md:px-8 py-6 md:py-8">
+      <div className="pt-28 pb-6 px-4 sm:px-6 md:px-8 md:pb-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3">Account Settings</h1>
