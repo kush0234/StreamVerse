@@ -338,17 +338,3 @@ class ContentSimilarity(models.Model):
             return f"{self.music_a.title} <-> {self.music_b.title} ({self.similarity_score:.2f})"
         return f"Similarity {self.similarity_score:.2f}"
 
-
-class MusicListenHistory(models.Model):
-    """Track user's music listening history - kept for migration reference only"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    profile = models.ForeignKey('users.Profile', on_delete=models.CASCADE)
-    music = models.ForeignKey(Music, on_delete=models.CASCADE, related_name='old_listen_history')
-    duration_listened = models.IntegerField(default=0)
-    completed = models.BooleanField(default=False)
-    play_count = models.IntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-updated_at']

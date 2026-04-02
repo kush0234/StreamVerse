@@ -48,6 +48,8 @@ SILENCED_SYSTEM_CHECKS = [
 
 # Application definition
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 INSTALLED_APPS = [
     "apps.admin_dashboard",  # Must be before django.contrib.admin to override templates
     "django.contrib.admin",
