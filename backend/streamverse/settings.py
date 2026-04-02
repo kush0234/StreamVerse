@@ -177,10 +177,11 @@ REST_FRAMEWORK = {
 }
 
 
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000"
-).split(",")
+CORS_ALLOWED_ORIGINS = [
+    origin.rstrip('/')
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
 
