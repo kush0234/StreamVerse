@@ -7,7 +7,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with connection.cursor() as cursor:
-            # Check if table exists
             cursor.execute("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables
@@ -17,10 +16,11 @@ class Command(BaseCommand):
             exists = cursor.fetchone()[0]
 
             if not exists:
-                self.stdout.write('Table missing — deleting stale migration records...')
-                cursor.execute("""
-                    DELETE FROM django_migrations WHERE app = 'token_blacklist';
-                """)
-                self.stdout.write(self.style.SUCCESS('Cleared. Running migrations now...'))
+                self.stdout.write('Tables missing — deleting stale migration records...')
+                cursor.execute("DELETE FROM django_migrations WHERE app = 'token_blacklist';")
+                # Drop any partial tables that may exist
+                cursor.execute("DROP TABLE IF EXISTS token_blacklist_blacklistedtoken CASCADE;")
+                cursor.execute("DROP TABLE IF EXISTS token_blacklist_outstandingtoken CASCADE;")
+                self.stdout.write(self.style.SUCCESS('Cleared. migrate will recreate them.'))
             else:
-                self.stdout.write(self.style.SUCCESS('Table already exists, nothing to do.'))
+                self.stdout.write(self.style.SUCCESS('Tables exist, nothing to do.'))
