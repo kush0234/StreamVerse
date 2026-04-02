@@ -88,7 +88,7 @@ export default function Navbar() {
           </div>
 
           {/* Right - Search, badge, profile, hamburger */}
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
             <SearchBar />
 
             {subscription && subscription.is_active_status && (
