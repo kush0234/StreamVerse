@@ -26,6 +26,7 @@ const STAT_CARDS = [
   { key: 'IN_PROGRESS', label: 'In Progress', cls: 'bg-purple-500/10 border-purple-500/30', textCls: 'text-purple-400' },
   { key: 'COMPLETED', label: 'Completed', cls: 'bg-green-500/10 border-green-500/30', textCls: 'text-green-400' },
   { key: 'REJECTED', label: 'Rejected', cls: 'bg-red-500/10 border-red-500/30', textCls: 'text-red-400' },
+  { key: 'CLOSED', label: 'Closed', cls: 'bg-gray-500/10 border-gray-500/30', textCls: 'text-gray-400' },
 ];
 
 export default function AdminFeedbackPage() {
@@ -96,7 +97,7 @@ export default function AdminFeedbackPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           {STAT_CARDS.map(({ key, label, cls, textCls }) => (
             <div key={key} className={`rounded-xl p-4 border ${cls}`}>
               <p className={`text-xs mb-1 ${textCls}`}>{label}</p>

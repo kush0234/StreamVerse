@@ -53,7 +53,7 @@ export default function AdminSidebar() {
       </Link>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto custom-scrollbar">
         <p className="text-gray-600 text-xs font-semibold uppercase tracking-wider px-3 mb-2">Menu</p>
         <ul className="space-y-1">
           {menuItems.map((item) => {

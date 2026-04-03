@@ -67,7 +67,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatsCard title="Total Users" value={stats?.total_users || 0} icon={Users} color="blue" />
         <StatsCard title="Total Videos" value={stats?.total_videos || 0} icon={Video} color="purple" />
         <StatsCard title="Total Episodes" value={stats?.total_episodes || 0} icon={Film} color="red" />

@@ -39,7 +39,7 @@ export default function AdminLayout({ children }) {
     <ToastProvider>
       <div className="min-h-screen bg-gray-950 flex">
         <AdminSidebar />
-        <main className="flex-1 ml-64 min-h-screen overflow-y-auto">
+        <main className="flex-1 ml-64 min-h-screen overflow-y-auto custom-scrollbar">
           <div className="p-6 max-w-screen-2xl">
             {children}
           </div>

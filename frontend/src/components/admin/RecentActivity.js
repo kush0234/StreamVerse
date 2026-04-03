@@ -98,7 +98,7 @@ export default function RecentActivity() {
           <p>No recent activities</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+        <div className="space-y-3 h-72 overflow-y-auto custom-scrollbar">
           {activities.map((activity) => (
             <div
               key={activity.id}
