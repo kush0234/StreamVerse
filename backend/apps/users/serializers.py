@@ -96,7 +96,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         reset_token = PasswordResetToken.objects.create(user=user)
 
         # Send email
-        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token.token}"
+        reset_url = f"{settings.FRONTEND_URL}reset-password?token={reset_token.token}"
         subject = "StreamVerse - Password Reset Request"
         message = f"""
 Hello {user.username},
